@@ -1,0 +1,110 @@
+[
+  {
+    "id": "revisao-etp",
+    "arquivo": "01-revisao-etp.md",
+    "titulo": "Revisão Crítica de ETP",
+    "etapa": "planejamento",
+    "entrada_glob": ["etp.*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "pesquisa-precos",
+    "arquivo": "02-pesquisa-precos.md",
+    "titulo": "Análise Comparativa de Pesquisa de Preços",
+    "etapa": "precos-e-regras",
+    "entrada_glob": ["cotacoes/*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "validacao-especificacoes",
+    "arquivo": "03-validacao-especificacoes.md",
+    "titulo": "Validação de Especificações Técnicas",
+    "etapa": "precos-e-regras",
+    "entrada_glob": ["tr.*", "termo-referencia.*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "sintese-jurisprudencia",
+    "arquivo": "04-sintese-jurisprudencia.md",
+    "titulo": "Síntese de Jurisprudência e Pareceres",
+    "etapa": "precos-e-regras",
+    "entrada_glob": ["jurisprudencia/*", "pareceres/*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "checklist-edital",
+    "arquivo": "05-checklist-edital.md",
+    "titulo": "Análise de Edital (Checklist da Licitação)",
+    "etapa": "pre-publicacao",
+    "entrada_glob": ["edital.*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "contradicoes-normativas",
+    "arquivo": "06-contradicoes-normativas.md",
+    "titulo": "Identificação de Contradições em Normativas",
+    "etapa": "precos-e-regras",
+    "entrada_glob": ["normas-internas/*"],
+    "auto_trigger": false,
+    "motivo_manual": "depende de qual tema específico se quer comparar contra as normas internas — dispare via workflow_dispatch informando o caso"
+  },
+  {
+    "id": "roteiro-fiscalizacao",
+    "arquivo": "07-roteiro-fiscalizacao.md",
+    "titulo": "Roteiro de Fiscalização de Contrato",
+    "etapa": "julgamento-e-gestao",
+    "entrada_glob": ["minuta-contratual.*", "contrato.*", "tr.*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "matriz-riscos",
+    "arquivo": "08-matriz-riscos.md",
+    "titulo": "Análise de Riscos na Contratação",
+    "etapa": "planejamento",
+    "entrada_glob": ["etp.*", "tr.*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "faq-esclarecimentos",
+    "arquivo": "09-faq-esclarecimentos.md",
+    "titulo": "Compilação de FAQ de Esclarecimentos e Impugnações",
+    "etapa": "comunicacao",
+    "entrada_glob": ["esclarecimentos/*", "impugnacoes/*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "comparacao-propostas",
+    "arquivo": "10-comparacao-propostas.md",
+    "titulo": "Comparação de Propostas Técnicas",
+    "etapa": "julgamento-e-gestao",
+    "entrada_glob": ["propostas-tecnicas/*"],
+    "auto_trigger": true
+  },
+  {
+    "id": "podcast-educativo",
+    "arquivo": "11-podcast-educativo.md",
+    "titulo": "Podcast Educativo sobre Procedimento (Audio Overview)",
+    "etapa": "comunicacao",
+    "entrada_glob": [],
+    "auto_trigger": false,
+    "automatizavel": false,
+    "motivo_manual": "gera áudio via NotebookLM Audio Overview — a API da Claude não produz esse formato; mantido só para colar manualmente no campo 'Personalizar' do NotebookLM"
+  },
+  {
+    "id": "linguagem-simples",
+    "arquivo": "12-linguagem-simples.md",
+    "titulo": "Simplificação de Texto para Comunicação (Linguagem Simples)",
+    "etapa": "comunicacao",
+    "entrada_glob": [],
+    "auto_trigger": false,
+    "motivo_manual": "não tem um documento-gatilho fixo — dispare via workflow_dispatch com --documento apontando o arquivo a simplificar"
+  },
+  {
+    "id": "advogado-do-diabo",
+    "arquivo": "13-advogado-do-diabo.md",
+    "titulo": "O \"Advogado do Diabo\" (Simulação de Impugnação)",
+    "etapa": "pre-publicacao",
+    "entrada_glob": ["edital.*"],
+    "auto_trigger": true
+  }
+]

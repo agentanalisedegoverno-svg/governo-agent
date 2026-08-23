@@ -1,0 +1,88 @@
+name: Analise automatizada de licitacao
+
+on:
+  push:
+    branches: [main]
+    paths: ["casos/**"]
+  pull_request:
+    paths: ["casos/**"]
+  workflow_dispatch:
+    inputs:
+      caso:
+        description: "ID do processo (nome da pasta em casos/)"
+        required: true
+      prompt:
+        description: "ID do prompt (ver prompts/index.json)"
+        required: true
+      documento:
+        description: "Arquivo especifico dentro do caso (opcional, usado por prompts sem gatilho fixo)"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  analisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Detectar arquivos alterados
+        id: alterados
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          before="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}" --depth=50
+            arquivos=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          elif [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            arquivos=$(git show --name-only --pretty="" HEAD)
+          else
+            arquivos=$(git diff --name-only "$before" "${{ github.sha }}")
+          fi
+          echo "arquivos<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$arquivos" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Executar analises (arquivos alterados)
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m agente.executar --arquivos "${{ steps.alterados.outputs.arquivos }}"
+
+      - name: Executar analise manual
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m agente.executar \
+            --caso "${{ inputs.caso }}" \
+            --prompt "${{ inputs.prompt }}" \
+            --documento "${{ inputs.documento }}"
+
+      - name: Comitar relatorios gerados
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "licitacoes-agent"
+          git config user.email "licitacoes-agent@users.noreply.github.com"
+          git add "casos/**/analises/*.md" "normas/manifest.json"
+          git diff --cached --quiet || git commit -m "docs: analises automaticas geradas pelo agente"
+          git push
+
+      - name: Comentar na PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file "$GITHUB_STEP_SUMMARY"

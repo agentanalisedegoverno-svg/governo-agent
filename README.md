@@ -1,0 +1,78 @@
+# licitacoes-agent
+
+Agente automatizado de análise de processos de contratação pública brasileiros
+(Lei 14.133/2021), orquestrado via GitHub Actions. Cada documento adicionado a
+um caso dispara automaticamente as análises aplicáveis via API da Claude —
+sem colar prompt manualmente em nenhuma interface.
+
+## Como funciona
+
+```
+push/PR em casos/**  →  Action detecta quais arquivos mudaram
+                     →  casa contra entrada_glob de prompts/index.json
+                     →  chama a API da Claude uma vez por prompt aplicável
+                     →  grava casos/{id}/analises/{prompt}.md
+                     →  comita (push) ou comenta na PR (pull_request)
+```
+
+Não é um agente com loop de tool-use — é orquestração determinística (o
+GitHub Actions decide o que roda) + chamadas simples à Messages API, uma por
+prompt. Isso é intencional: cada análise fica auditável e reproduzível, o que
+importa em contexto de compliance.
+
+## Estrutura
+
+- `normas/` — corpus jurídico fixo (Lei 14.133, Decreto 11.462, IN 65/2021,
+  Lei 15.263 etc.). Adicione os PDFs oficiais aqui — ver `normas/README.md`.
+- `prompts/index.json` — mapa de qual prompt roda para qual padrão de arquivo
+  (`entrada_glob`) e se dispara automaticamente (`auto_trigger`) ou só sob
+  demanda.
+- `prompts/*.md` — os 13 prompts especializados, com placeholders `{{OBJETO}}`,
+  `{{TEMA}}` etc. preenchidos a partir de `casos/{id}/caso.json`.
+- `casos/{numero-processo}/` — documentos de cada processo real; ver
+  `casos/EXEMPLO-001/LEIA-ME.md` para a convenção de nomes.
+- `agente/` — o script Python que a Action executa.
+
+## Rodando localmente
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env   # preencha ANTHROPIC_API_KEY
+export $(cat .env | xargs)
+
+python -m agente.executar --caso EXEMPLO-001 --prompt revisao-etp
+```
+
+## Custo e cache
+
+O corpus em `normas/` é enviado uma vez via Files API (reaproveitado por
+checksum em `normas/manifest.json`) e referenciado com `cache_control` em
+todas as chamadas — ele é o mesmo bloco de conteúdo nas 13 análises, então só
+a primeira paga o preço cheio de processamento; as seguintes leem do cache
+(~10% do custo). Os documentos do caso ganham um segundo breakpoint, então
+quando dois prompts disparam pelo mesmo arquivo (ex. `etp.*` aciona revisão de
+ETP + matriz de riscos), o documento também é reaproveitado entre as duas
+chamadas.
+
+Modelo padrão: `claude-opus-5`. Dá para sobrescrever por prompt com o campo
+`"modelo"` em `prompts/index.json` se quiser usar um modelo mais barato em
+prompts de menor risco (ex. FAQ, linguagem simples).
+
+## Segurança
+
+- **Este repositório precisa ser privado** — os documentos de caso (ETPs,
+  cotações, propostas) são sensíveis/protegidos por sigilo até a publicação.
+- `ANTHROPIC_API_KEY` como GitHub Secret (`Settings → Secrets and variables →
+  Actions`).
+- O workflow só reage a `push`/`pull_request` dentro do próprio repositório —
+  não há gatilho de PR de fork, então o secret não é exposto.
+
+## Limitações conhecidas
+
+- **Prompt 11 (podcast educativo)** usa o recurso de Audio Overview do
+  NotebookLM, que não tem equivalente na API da Claude — continua sendo uso
+  manual, copiado para a interface do NotebookLM.
+- **Prompts 06 e 12** não têm um documento-gatilho fixo e só rodam via
+  `workflow_dispatch` manual.
+- A saída da IA é insumo de análise, não substitui parecer jurídico formal —
+  isso está registrado como aviso em vários dos prompts.
