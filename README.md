@@ -8,11 +8,11 @@ sem colar prompt manualmente em nenhuma interface.
 ## Como funciona
 
 ```
-push/PR em casos/**  →  Action detecta quais arquivos mudaram
+push em main/casos/** →  Action detecta quais arquivos mudaram
                      →  casa contra entrada_glob de prompts/index.json
                      →  chama a API da Claude uma vez por prompt aplicável
                      →  grava casos/{id}/analises/{prompt}.md
-                     →  comita (push) ou comenta na PR (pull_request)
+                     →  abre PR (push) ou comenta na PR existente
 ```
 
 Não é um agente com loop de tool-use — é orquestração determinística (o
@@ -64,8 +64,44 @@ prompts de menor risco (ex. FAQ, linguagem simples).
   cotações, propostas) são sensíveis/protegidos por sigilo até a publicação.
 - `ANTHROPIC_API_KEY` como GitHub Secret (`Settings → Secrets and variables →
   Actions`).
-- O workflow só reage a `push`/`pull_request` dentro do próprio repositório —
-  não há gatilho de PR de fork, então o secret não é exposto.
+- O workflow documental com secret roda apenas em `main` ou manualmente. Em PR,
+  o governador usa seu código confiável e nunca executa o conteúdo proposto.
+
+## AI Engineering Governor
+
+O repositório também contém um governador de engenharia permanente e separado
+do agente de licitações. Ele avalia software, arquitetura, IA, infraestrutura,
+segurança, privacidade e governança de dados.
+
+O fluxo possui separação de privilégios:
+
+```text
+push em qualquer branch -> verificações determinísticas, token somente leitura
+Pull Request             -> governador confiável analisa a proposta como dados
+push em main             -> análise completa e proposta em branch ai-governor/*
+segunda-feira, 08:17 UTC -> Continuous Knowledge Pull em fontes autorizadas
+```
+
+Nenhuma alteração é aplicada diretamente em `main`. Evidências e patches são
+enviados a uma branch própria e viram Pull Request sujeito à aprovação humana.
+O código da PR não é executado pelo governador privilegiado.
+
+As políticas e a memória operacional ficam em `governanca/`. O ponto de entrada
+local é:
+
+```bash
+python -m agente_governanca --mode deterministic
+python -m agente_governanca --require-ai
+python -m agente_governanca --knowledge-pull --apply-proposals
+```
+
+Para ativar a análise por IA, cadastre `ANTHROPIC_API_KEY` em
+`Settings > Secrets and variables > Actions`. Em `Settings > Actions > General`,
+habilite **Allow GitHub Actions to create and approve pull requests**; o workflow
+somente cria PRs e não usa a permissão para aprová-los.
+
+Proteja `main` com ruleset exigindo Pull Request, ao menos uma aprovação humana,
+revisão de CODEOWNER e invalidação de aprovações quando houver novos commits.
 
 ## Limitações conhecidas
 
