@@ -1,0 +1,171 @@
+name: AI Engineering Governor
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "governanca/evidencias/**"
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "governanca/evidencias/**"
+  schedule:
+    - cron: "17 8 * * 1"
+  workflow_dispatch:
+    inputs:
+      knowledge_pull:
+        description: "Consultar fontes externas autorizadas"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ai-governor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review-pull-request:
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout confiavel do governador
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: governor
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout da proposta somente como dados
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: target
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Buscar a base para calcular o diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          git -C target remote add governor-base "https://github.com/${BASE_REPOSITORY}.git"
+          git -C target fetch --no-tags governor-base "$BASE_SHA"
+
+      - name: Configurar Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Instalar SDK a partir da base confiavel
+        run: python -m pip install -r governor/requirements.txt
+
+      - name: Avaliar Pull Request
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PYTHONPATH: ${{ github.workspace }}/governor
+        run: |
+          python -m agente_governanca \
+            --repo target \
+            --policy-dir governor/governanca \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --require-ai \
+            --omit-patch-content \
+            --output "$RUNNER_TEMP/ai-governor-pr.md"
+          cat "$RUNNER_TEMP/ai-governor-pr.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar ou atualizar evidencia na PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f "$RUNNER_TEMP/ai-governor-pr.md" ]; then
+            gh pr comment "$PR_NUMBER" \
+              --repo "$GITHUB_REPOSITORY" \
+              --edit-last \
+              --create-if-none \
+              --body-file "$RUNNER_TEMP/ai-governor-pr.md"
+          fi
+
+  govern-trusted-ref:
+    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout da branch protegida
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt
+
+      - name: Executar governanca e validar propostas
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASE_SHA: ${{ github.event.before }}
+          KNOWLEDGE_PULL: ${{ github.event_name == 'schedule' || inputs.knowledge_pull == true }}
+        run: |
+          base_args=()
+          knowledge_args=()
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            base_args=(--base "$BASE_SHA")
+          fi
+          if [ "$KNOWLEDGE_PULL" = "true" ]; then
+            knowledge_args=(--knowledge-pull)
+          fi
+          set +e
+          python -m agente_governanca \
+            --require-ai \
+            --apply-proposals \
+            "${base_args[@]}" \
+            "${knowledge_args[@]}"
+          governor_status=$?
+          set -e
+          report="governanca/evidencias/$(git rev-parse --short=12 HEAD).md"
+          if [ -f "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$governor_status"
+
+      - name: Criar branch e Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nenhuma evidencia ou alteracao foi gerada." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          short_sha="$(git rev-parse --short=12 HEAD)"
+          branch="ai-governor/run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${short_sha}"
+          git config user.name "ai-engineering-governor[bot]"
+          git config user.email "ai-engineering-governor[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A
+          git commit -m "governance: registrar avaliacao ${short_sha}"
+          git push origin "HEAD:${branch}"
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head "$branch" \
+            --title "governance: avaliacao do commit ${short_sha}" \
+            --body "Proposta do AI Engineering Governor para o commit \`${short_sha}\`. Nenhuma alteracao sera aplicada sem revisao e aprovacao humana. Evidencia: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."

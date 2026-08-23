@@ -1,0 +1,45 @@
+name: AI Governor - Commit Guard
+
+on:
+  push:
+    branches-ignore:
+      - "ai-governor/**"
+    paths-ignore:
+      - "governanca/evidencias/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-governor-commit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout do commit sem credenciais persistentes
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configurar Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Executar controles deterministas
+        env:
+          BASE_SHA: ${{ github.event.before }}
+        run: |
+          base_args=()
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            base_args=(--base "$BASE_SHA")
+          fi
+          python -m agente_governanca \
+            --mode deterministic \
+            "${base_args[@]}" \
+            --output "$RUNNER_TEMP/ai-governor-commit.md"
+          cat "$RUNNER_TEMP/ai-governor-commit.md" >> "$GITHUB_STEP_SUMMARY"

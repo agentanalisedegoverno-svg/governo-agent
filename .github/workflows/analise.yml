@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
     paths: ["casos/**"]
-  pull_request:
-    paths: ["casos/**"]
   workflow_dispatch:
     inputs:
       caso:
@@ -26,11 +24,11 @@ jobs:
   analisar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -42,10 +40,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           before="${{ github.event.before }}"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin "${{ github.base_ref }}" --depth=50
-            arquivos=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
-          elif [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
             arquivos=$(git show --name-only --pretty="" HEAD)
           else
             arquivos=$(git diff --name-only "$before" "${{ github.sha }}")
@@ -71,18 +66,26 @@ jobs:
             --prompt "${{ inputs.prompt }}" \
             --documento "${{ inputs.documento }}"
 
-      - name: Comitar relatorios gerados
+      - name: Criar Pull Request com relatorios gerados
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: |
-          git config user.name "licitacoes-agent"
-          git config user.email "licitacoes-agent@users.noreply.github.com"
-          git add "casos/**/analises/*.md" "normas/manifest.json"
-          git diff --cached --quiet || git commit -m "docs: analises automaticas geradas pelo agente"
-          git push
-
-      - name: Comentar na PR
-        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr comment "${{ github.event.pull_request.number }}" --body-file "$GITHUB_STEP_SUMMARY"
+          if [ -z "$(git status --porcelain -- 'casos/**/analises/*.md' 'normas/manifest.json')" ]; then
+            echo "Nenhum relatorio novo foi gerado." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          short_sha="$(git rev-parse --short=12 HEAD)"
+          branch="licitacoes-agent/run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${short_sha}"
+          git config user.name "licitacoes-agent"
+          git config user.email "licitacoes-agent@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A -- casos normas
+          git commit -m "docs: analises automaticas do commit ${short_sha}"
+          git push origin "HEAD:${branch}"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "docs: analises automaticas ${short_sha}" \
+            --body "Relatorios gerados automaticamente para o commit \`${short_sha}\`. A publicacao depende de revisao e aprovacao humana."
