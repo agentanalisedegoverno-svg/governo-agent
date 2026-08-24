@@ -25,3 +25,12 @@ separado, finalidade especifica e controles proprios.
 Dependencias de modelos e servicos externos devem registrar regiao, termos de uso,
 retencao do provedor, controles de treinamento, custo, disponibilidade, limites e
 plano de substituicao.
+
+O governador deve manter independencia entre provedores. Claude, OpenAI e Gemini
+executam a mesma avaliacao sem compartilhar respostas. Divergencias permanecem
+visiveis na evidencia; a consolidacao nunca reduz a maior severidade encontrada.
+O quorum minimo padrao e dois, e indisponibilidade deve aparecer como falha, nao
+como sucesso silencioso.
+
+Atualizacoes externas so podem vir de provedores cuja busca aplique a allowlist
+de fontes na propria API. Filtragem apenas posterior nao e controle suficiente.

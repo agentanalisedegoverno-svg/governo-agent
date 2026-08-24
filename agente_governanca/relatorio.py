@@ -37,7 +37,34 @@ def renderizar_relatorio(
         "",
         resultado.get("summary", "Analise sem resumo."),
         "",
+        "## Painel de modelos",
+        "",
     ]
+    quorum = resultado.get("quorum", {})
+    linhas += [
+        f"- Quorum minimo: `{quorum.get('minimum', 0)}`",
+        f"- Provedores concluidos: `{quorum.get('successful', 0)}`",
+        f"- Quorum atingido: `{quorum.get('reached', False)}`",
+        "",
+    ]
+    provider_runs = resultado.get("provider_runs", [])
+    if not provider_runs:
+        linhas += ["Execucao sem provedores externos.", ""]
+    for provider_run in provider_runs:
+        if provider_run.get("status") == "success":
+            usage = provider_run.get("usage", {})
+            linhas.append(
+                f"- **{provider_run.get('provider')}**: sucesso com "
+                f"`{provider_run.get('model')}` "
+                f"(entrada `{usage.get('input_tokens', 0)}`, saida `{usage.get('output_tokens', 0)}` tokens)"
+            )
+        else:
+            linhas.append(
+                f"- **{provider_run.get('provider')}**: falha "
+                f"`{provider_run.get('error_type')}` - {provider_run.get('message')}"
+            )
+    if provider_runs:
+        linhas.append("")
 
     findings = sorted(
         resultado.get("findings", []),

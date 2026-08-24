@@ -63,11 +63,18 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar SDK a partir da base confiavel
-        run: python -m pip install -r governor/requirements.txt
+        run: python -m pip install -r governor/requirements-governance.txt
+
+      - name: Testar governador confiavel
+        working-directory: governor
+        run: python -m unittest discover -s tests -v
 
       - name: Avaliar Pull Request
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_GOVERNOR_MIN_PROVIDERS: "2"
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PYTHONPATH: ${{ github.workspace }}/governor
@@ -115,11 +122,17 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar dependencias
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements-governance.txt
+
+      - name: Executar testes
+        run: python -m unittest discover -s tests -v
 
       - name: Executar governanca e validar propostas
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_GOVERNOR_MIN_PROVIDERS: "2"
           BASE_SHA: ${{ github.event.before }}
           KNOWLEDGE_PULL: ${{ github.event_name == 'schedule' || inputs.knowledge_pull == true }}
         run: |
@@ -146,6 +159,7 @@ jobs:
           exit "$governor_status"
 
       - name: Criar branch e Pull Request
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

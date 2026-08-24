@@ -15,11 +15,12 @@ from agente_governanca.coletor import (
 )
 from agente_governanca.modelos import ANALYSIS_SCHEMA
 from agente_governanca.patches import aplicar_patches
+from agente_governanca.provedores import ProviderFailure, ProviderReview, run_panel
 from agente_governanca.relatorio import renderizar_relatorio
 from agente_governanca.verificacoes import executar_verificacoes
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_MODEL = "claude-sonnet-5"
+DEFAULT_PROVIDERS = ["anthropic", "openai", "gemini"]
 
 SYSTEM_PROMPT = """Voce e o AI Engineering Governor de um projeto de IA.
 Atue criticamente nas areas de Engenharia e Arquitetura de Software, IA,
@@ -84,33 +85,13 @@ def filtrar_knowledge_updates(resultado: dict, dominios: list[str]) -> None:
     resultado["rejected_knowledge_updates"] = rejeitadas
 
 
-def _texto_resposta(resposta) -> str:
-    for bloco in resposta.content:
-        if getattr(bloco, "type", None) == "text":
-            return bloco.text
-    raise RuntimeError("A API nao retornou um bloco textual estruturado.")
-
-
-def analisar_com_ia(
+def montar_instrucao(
     snapshot: str,
     politicas: str,
     alterados: list[str],
     knowledge_pull: bool,
-    fontes: list[str],
-) -> tuple[dict, dict]:
-    import anthropic
-
-    ferramentas = []
-    if knowledge_pull:
-        ferramentas.append(
-            {
-                "type": "web_search_20260209",
-                "name": "web_search",
-                "allowed_domains": fontes,
-            }
-        )
-
-    instrucao = f"""Realize a avaliacao de governanca deste repositorio.
+) -> str:
+    return f"""Realize a avaliacao de governanca deste repositorio.
 
 Arquivos alterados nesta unidade de avaliacao:
 {json.dumps(alterados, ensure_ascii=False, indent=2)}
@@ -126,30 +107,111 @@ Knowledge Pull habilitado: {knowledge_pull}.
 Repositorio a analisar:
 {snapshot}
 """
-    client = anthropic.Anthropic()
-    kwargs = {
-        "model": os.getenv("AI_GOVERNOR_MODEL", DEFAULT_MODEL),
-        "max_tokens": 16_000,
-        "system": SYSTEM_PROMPT,
-        "messages": [{"role": "user", "content": instrucao}],
-        "output_config": {
-            "effort": "high",
-            "format": {"type": "json_schema", "schema": ANALYSIS_SCHEMA},
+
+
+def consolidar_painel(
+    reviews: list[ProviderReview],
+    failures: list[ProviderFailure],
+    deterministic_findings: list[dict],
+    minimum_providers: int,
+) -> dict:
+    summaries = []
+    findings = list(deterministic_findings)
+    decisions = []
+    knowledge_updates = []
+    proposed_patches = []
+    declared_risks = []
+    declared_decisions = []
+
+    for review in reviews:
+        provider = review.provider
+        provider_result = review.result
+        summaries.append(f"{provider}: {provider_result.get('summary', 'sem resumo')}")
+        declared_risks.append(provider_result.get("overall_risk", "none"))
+        declared_decisions.append(provider_result.get("decision", "pass"))
+        for finding in provider_result.get("findings", []):
+            findings.append(
+                {
+                    **finding,
+                    "id": f"{provider.upper()}-{finding.get('id', 'SEM-ID')}",
+                    "origin": f"ai:{provider}",
+                }
+            )
+        decisions.extend(
+            {**item, "title": f"[{provider}] {item.get('title', 'Sem titulo')}"}
+            for item in provider_result.get("architecture_decisions", [])
+        )
+        knowledge_updates.extend(
+            {**item, "title": f"[{provider}] {item.get('title', 'Sem titulo')}"}
+            for item in provider_result.get("knowledge_updates", [])
+        )
+        proposed_patches.extend(
+            {**item, "title": f"[{provider}] {item.get('title', 'Sem titulo')}"}
+            for item in provider_result.get("proposed_patches", [])
+        )
+
+    quorum_reached = len(reviews) >= minimum_providers
+    result = {
+        "summary": "\n\n".join(summaries) if summaries else "Nenhum provedor de IA concluiu a analise.",
+        "overall_risk": _worst_risk(declared_risks),
+        "decision": _strictest_decision(declared_decisions),
+        "findings": findings,
+        "architecture_decisions": decisions,
+        "knowledge_updates": knowledge_updates,
+        "proposed_patches": proposed_patches,
+        "execution_status": "complete" if quorum_reached else "degraded",
+        "quorum": {
+            "minimum": minimum_providers,
+            "successful": len(reviews),
+            "reached": quorum_reached,
         },
+        "provider_runs": [
+            {
+                "provider": review.provider,
+                "status": "success",
+                "model": review.model,
+                "usage": review.usage,
+            }
+            for review in reviews
+        ]
+        + [
+            {
+                "provider": failure.provider,
+                "status": "failed",
+                "error_type": failure.error_type,
+                "message": failure.message,
+            }
+            for failure in failures
+        ],
     }
-    if ferramentas:
-        kwargs["tools"] = ferramentas
-    resposta = client.messages.create(**kwargs)
-    resultado = json.loads(_texto_resposta(resposta))
-    for finding in resultado.get("findings", []):
-        finding["origin"] = "ai"
-    uso = resposta.usage
-    metadados = {
-        "model": resposta.model,
-        "input_tokens": getattr(uso, "input_tokens", 0),
-        "output_tokens": getattr(uso, "output_tokens", 0),
-    }
-    return resultado, metadados
+    consolidar_risco(result)
+    return result
+
+
+def _worst_risk(risks: list[str]) -> str:
+    order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "none": 4}
+    return min(risks or ["none"], key=lambda item: order.get(item, 4))
+
+
+def _strictest_decision(decisions: list[str]) -> str:
+    order = {"changes_required": 0, "pass_with_recommendations": 1, "pass": 2}
+    return min(decisions or ["pass"], key=lambda item: order.get(item, 2))
+
+
+def normalizar_provedores(value: str, minimum_providers: int) -> list[str]:
+    providers = list(dict.fromkeys(item.strip() for item in value.split(",") if item.strip()))
+    if not providers:
+        raise ValueError("Ao menos um provedor deve ser selecionado.")
+    invalid = sorted(set(providers) - set(DEFAULT_PROVIDERS))
+    if invalid:
+        raise ValueError(f"Provedores invalidos: {', '.join(invalid)}")
+    if minimum_providers < 1:
+        raise ValueError("O quorum minimo deve ser maior ou igual a 1.")
+    if minimum_providers > len(providers):
+        raise ValueError(
+            "O quorum minimo nao pode superar a quantidade de provedores independentes."
+        )
+    return providers
 
 
 def resultado_deterministico(findings: list[dict], motivo: str | None = None) -> dict:
@@ -173,7 +235,8 @@ def resultado_deterministico(findings: list[dict], motivo: str | None = None) ->
         "knowledge_updates": [],
         "proposed_patches": [],
         "execution_status": "degraded" if motivo else "deterministic",
-        "model_usage": {},
+        "quorum": {"minimum": 0, "successful": 0, "reached": True},
+        "provider_runs": [],
     }
 
 
@@ -196,28 +259,37 @@ def executar(args: argparse.Namespace) -> tuple[dict, Path]:
     alterados = arquivos_alterados(repo, args.base, args.head)
     snapshot, incluidos = montar_snapshot(repo, alterados)
     deterministicos = executar_verificacoes(repo)
-    chave_disponivel = bool(os.getenv("ANTHROPIC_API_KEY"))
 
-    if args.mode == "deterministic" or not chave_disponivel:
-        motivo = None if args.mode == "deterministic" else "ANTHROPIC_API_KEY nao configurada"
-        resultado = resultado_deterministico(deterministicos, motivo)
+    if args.mode == "deterministic":
+        resultado = resultado_deterministico(deterministicos)
     else:
-        resultado, uso = analisar_com_ia(
-            snapshot,
-            carregar_politicas(policy_dir),
-            alterados,
+        requested_providers = normalizar_provedores(args.providers, args.min_providers)
+        reviews, failures = run_panel(
+            requested_providers,
+            SYSTEM_PROMPT,
+            montar_instrucao(
+                snapshot,
+                carregar_politicas(policy_dir),
+                alterados,
+                args.knowledge_pull,
+            ),
+            ANALYSIS_SCHEMA,
             args.knowledge_pull,
             carregar_fontes_autorizadas(policy_dir),
         )
-        resultado["findings"] = deterministicos + resultado.get("findings", [])
-        resultado["execution_status"] = "complete"
-        resultado["model_usage"] = uso
+        resultado = consolidar_painel(
+            reviews,
+            failures,
+            deterministicos,
+            args.min_providers,
+        )
         filtrar_knowledge_updates(resultado, carregar_fontes_autorizadas(policy_dir))
 
     consolidar_risco(resultado)
 
     aplicados, rejeitados = ([], [])
-    if args.apply_proposals and resultado.get("proposed_patches"):
+    quorum_reached = resultado.get("quorum", {}).get("reached", False)
+    if args.apply_proposals and quorum_reached and resultado.get("proposed_patches"):
         aplicados, rejeitados = aplicar_patches(repo, resultado["proposed_patches"])
     resultado["applied_patches"] = aplicados
     resultado["rejected_patches"] = rejeitados
@@ -237,8 +309,12 @@ def executar(args: argparse.Namespace) -> tuple[dict, Path]:
         json.dumps({"context": contexto, "result": resultado}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    if args.require_ai and not chave_disponivel:
-        raise RuntimeError("ANTHROPIC_API_KEY e obrigatoria para esta execucao.")
+    if args.require_ai and not quorum_reached:
+        quorum = resultado.get("quorum", {})
+        raise RuntimeError(
+            "Quorum de IA nao atingido: "
+            f"{quorum.get('successful', 0)}/{quorum.get('minimum', args.min_providers)} provedores."
+        )
     return resultado, output
 
 
@@ -254,6 +330,16 @@ def main() -> None:
     parser.add_argument("--apply-proposals", action="store_true")
     parser.add_argument("--require-ai", action="store_true")
     parser.add_argument("--omit-patch-content", action="store_true")
+    parser.add_argument(
+        "--providers",
+        default=os.getenv("AI_GOVERNOR_PROVIDERS", ",".join(DEFAULT_PROVIDERS)),
+        help="Provedores separados por virgula: anthropic,openai,gemini",
+    )
+    parser.add_argument(
+        "--min-providers",
+        type=int,
+        default=int(os.getenv("AI_GOVERNOR_MIN_PROVIDERS", "2")),
+    )
     args = parser.parse_args()
     resultado, output = executar(args)
     print(f"Relatorio: {output}")
