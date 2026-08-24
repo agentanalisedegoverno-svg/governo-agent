@@ -1,3 +1,40 @@
+# CODEOWNERS - revisao humana obrigatoria (GOV-002)
+#
+# Bots nao podem constar aqui. A aprovacao de github-actions[bot] jamais
+# satisfaz "Require review from Code Owners", entao o governador consegue
+# abrir a Pull Request mas nunca consegue liberar o proprio merge.
+#
+# Substitua ou amplie os responsaveis conforme a equipe crescer. Enquanto
+# houver um unico mantenedor, o ruleset precisa de bypass para Repository
+# admin (ver .github/rulesets/main-hitl.json).
+
+# Padrao: qualquer arquivo exige revisao do mantenedor.
+* @agentanalisedegoverno-svg
+
+# Automacao e superficie privilegiada
+/.github/ @agentanalisedegoverno-svg
+/.github/workflows/ @agentanalisedegoverno-svg
+/.github/CODEOWNERS @agentanalisedegoverno-svg
+/.github/rulesets/ @agentanalisedegoverno-svg
+/.github/dependabot.yml @agentanalisedegoverno-svg
+
+# Codigo do agente de licitacoes e do governador
+/agente/ @agentanalisedegoverno-svg
+/agente_governanca/ @agentanalisedegoverno-svg
+/requirements.txt @agentanalisedegoverno-svg
+/requirements-governance.txt @agentanalisedegoverno-svg
+/tests/ @agentanalisedegoverno-svg
+
+# Politicas e memoria operacional do agente
+/governanca/ @agentanalisedegoverno-svg
+/governanca/AI_ENGINEERING_GOVERNOR.md @agentanalisedegoverno-svg
+/governanca/politicas/ @agentanalisedegoverno-svg
+/governanca/decisoes/ @agentanalisedegoverno-svg
+/governanca/riscos/ @agentanalisedegoverno-svg
+
+# Prompts e corpus normativo
+/prompts/ @agentanalisedegoverno-svg
+/normas/ @agentanalisedegoverno-svg
 # Substitua ou amplie os responsaveis conforme a equipe crescer.
 * @agentanalisedegoverno-svg
 
