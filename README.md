@@ -73,6 +73,11 @@ O repositório também contém um governador de engenharia permanente e separado
 do agente de licitações. Ele avalia software, arquitetura, IA, infraestrutura,
 segurança, privacidade e governança de dados.
 
+O governador usa um painel independente com Claude, modelos GPT pela OpenAI API
+e Gemini. Por padrão, ao menos dois provedores precisam concluir a análise. A
+indisponibilidade de um provedor não apaga os achados dos demais, e a consolidação
+sempre preserva a maior severidade.
+
 O fluxo possui separação de privilégios:
 
 ```text
@@ -96,7 +101,8 @@ python -m agente_governanca --knowledge-pull --apply-proposals
 ```
 
 Para ativar a análise por IA, cadastre `ANTHROPIC_API_KEY` em
-`Settings > Secrets and variables > Actions`. Em `Settings > Actions > General`,
+`Settings > Secrets and variables > Actions`, junto com `OPENAI_API_KEY` e
+`GEMINI_API_KEY`. Em `Settings > Actions > General`,
 habilite **Allow GitHub Actions to create and approve pull requests**; o workflow
 somente cria PRs e não usa a permissão para aprová-los.
 

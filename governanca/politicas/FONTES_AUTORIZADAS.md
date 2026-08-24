@@ -5,6 +5,9 @@ Novas fontes exigem alteracao deste arquivo por Pull Request e aprovacao humana.
 
 - `anthropic.com`
 - `platform.claude.com`
+- `openai.com`
+- `developers.openai.com`
+- `ai.google.dev`
 - `docs.github.com`
 - `github.com`
 - `nist.gov`

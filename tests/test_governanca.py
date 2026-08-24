@@ -1,11 +1,26 @@
+import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
+from unittest.mock import patch
 
 from agente_governanca.coletor import montar_snapshot
-from agente_governanca.governador import consolidar_risco, fonte_autorizada
+from agente_governanca.governador import (
+    consolidar_painel,
+    consolidar_risco,
+    fonte_autorizada,
+    normalizar_provedores,
+)
 from agente_governanca.patches import validar_patch
+from agente_governanca.provedores import (
+    ProviderFailure,
+    ProviderReview,
+    _gemini_review,
+    _openai_review,
+)
 from agente_governanca.verificacoes import verificar_secrets
 
 
@@ -84,7 +99,73 @@ class PatchTests(unittest.TestCase):
             validar_patch(diff)
 
 
+def _provider_payload() -> dict:
+    return {
+        "summary": "review",
+        "overall_risk": "none",
+        "decision": "pass",
+        "findings": [],
+        "architecture_decisions": [],
+        "knowledge_updates": [{"title": "external"}],
+        "proposed_patches": [{"title": "policy"}],
+    }
+
+
+class ProviderAdapterTests(unittest.TestCase):
+    def test_openai_knowledge_pull_applies_domain_allowlist(self):
+        captured = {}
+        response = SimpleNamespace(
+            output_text=json.dumps(_provider_payload()),
+            model="test-openai",
+            usage=SimpleNamespace(input_tokens=1, output_tokens=2),
+        )
+        client = SimpleNamespace(
+            responses=SimpleNamespace(
+                create=lambda **kwargs: captured.update(kwargs) or response
+            )
+        )
+        fake_openai = ModuleType("openai")
+        fake_openai.OpenAI = lambda: client
+
+        with patch.dict(sys.modules, {"openai": fake_openai}):
+            _openai_review("system", "user", {}, True, ["nist.gov"])
+
+        self.assertEqual(
+            ["nist.gov"], captured["tools"][0]["filters"]["allowed_domains"]
+        )
+        self.assertEqual("required", captured["tool_choice"])
+
+    def test_gemini_knowledge_pull_discards_external_changes(self):
+        interaction = SimpleNamespace(
+            output_text=json.dumps(_provider_payload()),
+            usage=SimpleNamespace(input_tokens=1, output_tokens=2),
+        )
+        fake_genai = ModuleType("google.genai")
+        fake_genai.Client = lambda: SimpleNamespace(
+            interactions=SimpleNamespace(create=lambda **_kwargs: interaction)
+        )
+        fake_google = ModuleType("google")
+        fake_google.genai = fake_genai
+
+        with patch.dict(
+            sys.modules,
+            {"google": fake_google, "google.genai": fake_genai},
+        ):
+            review = _gemini_review("system", "user", {}, True)
+
+        self.assertEqual([], review.result["knowledge_updates"])
+        self.assertEqual([], review.result["proposed_patches"])
+
+
 class PolicyTests(unittest.TestCase):
+    def test_provider_quorum_counts_unique_providers_only(self):
+        providers = normalizar_provedores("openai,openai,gemini", 2)
+        self.assertEqual(["openai", "gemini"], providers)
+
+    def test_provider_quorum_rejects_impossible_configuration(self):
+        with self.assertRaisesRegex(ValueError, "nao pode superar"):
+            normalizar_provedores("openai,gemini", 3)
+
     def test_only_authorized_domains_and_subdomains_are_accepted(self):
         allowed = ["nist.gov", "docs.github.com"]
         self.assertTrue(fonte_autorizada("https://csrc.nist.gov/pubs", allowed))
@@ -100,6 +181,63 @@ class PolicyTests(unittest.TestCase):
         consolidar_risco(result)
         self.assertEqual("critical", result["overall_risk"])
         self.assertEqual("changes_required", result["decision"])
+
+    def test_panel_preserves_worst_risk_and_provider_origin(self):
+        reviews = [
+            ProviderReview(
+                provider="openai",
+                model="test-openai",
+                usage={},
+                result={
+                    "summary": "OpenAI review",
+                    "overall_risk": "low",
+                    "decision": "pass_with_recommendations",
+                    "findings": [],
+                    "architecture_decisions": [],
+                    "knowledge_updates": [],
+                    "proposed_patches": [],
+                },
+            ),
+            ProviderReview(
+                provider="gemini",
+                model="test-gemini",
+                usage={},
+                result={
+                    "summary": "Gemini review",
+                    "overall_risk": "high",
+                    "decision": "changes_required",
+                    "findings": [
+                        {
+                            "id": "SEC-1",
+                            "title": "Risk",
+                            "category": "security",
+                            "severity": "high",
+                            "confidence": "high",
+                            "evidence": "Evidence",
+                            "impact": "Impact",
+                            "recommendation": "Fix",
+                            "affected_files": ["app.py"],
+                        }
+                    ],
+                    "architecture_decisions": [],
+                    "knowledge_updates": [],
+                    "proposed_patches": [],
+                },
+            ),
+        ]
+        result = consolidar_painel(reviews, [], [], minimum_providers=2)
+        self.assertTrue(result["quorum"]["reached"])
+        self.assertEqual("high", result["overall_risk"])
+        self.assertEqual("ai:gemini", result["findings"][0]["origin"])
+
+    def test_panel_reports_degraded_when_quorum_is_not_reached(self):
+        failures = [
+            ProviderFailure("anthropic", "missing_credentials", "missing"),
+            ProviderFailure("gemini", "timeout", "timeout"),
+        ]
+        result = consolidar_painel([], failures, [], minimum_providers=2)
+        self.assertFalse(result["quorum"]["reached"])
+        self.assertEqual("degraded", result["execution_status"])
 
 
 if __name__ == "__main__":
