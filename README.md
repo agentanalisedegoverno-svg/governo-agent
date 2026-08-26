@@ -17,6 +17,8 @@ Documentação complementar:
 - [Manual geral](MANUAL_DE_USO.md)
 - [Manual do Motor de Atestados](MANUAL_MOTOR_ATESTADOS.md)
 - [Massa necessária para homologação](MASSA_TESTES_PRODUTO.md)
+- [Insumos que devem ser solicitados aos usuários](INSUMOS_USUARIOS_PRODUTO.md)
+- [Política de retenção e expurgo](governanca/politicas/RETENCAO_DADOS.md)
 - [Roadmap técnico](roadmap-project.md)
 
 ## Arquitetura atual
@@ -173,6 +175,13 @@ O processamento carrega o upload e o texto extraído em memória. A quantidade d
 requisições simultâneas deve permanecer limitada no piloto; o consumo real de
 RAM, tokens, latência e custo precisa ser medido com a massa de homologação.
 
+O conteúdo temporário controlado pela solução possui prazo máximo de 10 dias
+após a conclusão da análise. A regra, seu escopo e a lacuna de automação da
+versão atual estão na
+[`Política de Retenção e Expurgo`](governanca/politicas/RETENCAO_DADOS.md). A
+retenção feita por provedores externos segue os termos contratualmente aceitos e
+não é contabilizada como armazenamento da infraestrutura deste produto.
+
 Dependências:
 
 ```powershell
@@ -188,6 +197,10 @@ Variáveis necessárias para o motor:
 | --- | --- | --- |
 | `MOTOR_API_KEY` | Sim | Protege os endpoints `/v1/*` |
 | `MOTOR_DATA_DIR` | Não | Diretório da trilha local; padrão `.motor-data` |
+| `MOTOR_ENVIRONMENT` | Não | Identifica o ambiente nos logs; padrão `local` |
+| `MOTOR_LOG_LEVEL` | Não | Nível mínimo dos eventos; padrão `INFO` |
+| `MOTOR_LOG_FILE` | Não | Arquivo JSONL; padrão `.motor-data/logs/motor.jsonl` |
+| `MOTOR_LOG_RETENTION_DAYS` | Não | Quantidade de arquivos diários rotacionados; padrão `10` |
 | `ATESTADOS_PROVIDER` | Não | `anthropic`, `openai` ou `gemini`; padrão automático |
 | `ANTHROPIC_API_KEY` | Condicional | Necessária quando Claude for utilizado |
 | `OPENAI_API_KEY` | Condicional | Necessária quando OpenAI for utilizada |
@@ -230,8 +243,8 @@ instância**, pois a persistência local ainda não suporta múltiplas réplicas
 | Entrada | Reverse proxy com TLS, limite de 20 MB e rede privada/VPN |
 | Autenticação | `MOTOR_API_KEY` em Secret Manager; acesso apenas ao grupo piloto |
 | Saída | HTTPS somente para o provedor homologado |
-| Logs | Metadados técnicos, sem PDF, prompt completo, resposta integral ou secrets |
-| Backup | Backup criptografado de `.motor-data/` conforme retenção aprovada |
+| Logs | JSONL em stdout e arquivo rotativo, sem PDF, requisito, prompt, resposta ou secrets |
+| Backup | Backup criptografado de `.motor-data/`, sem ultrapassar 10 dias para conteúdo |
 
 Esse ambiente é apenas piloto. A chave técnica compartilhada não substitui
 identidade individual, autorização por órgão ou segregação entre casos.
@@ -277,6 +290,10 @@ Baseline inicial para dimensionamento, sujeito a teste de carga:
 - observabilidade sem conteúdo sensível;
 - ambientes separados de desenvolvimento, homologação e produção;
 - região, residência e retenção aprovadas para cada provedor de IA.
+
+Object storage, banco, índices, caches e backups devem permitir exclusão por
+análise. A confirmação de exportação permite expurgo antecipado; em qualquer
+caso, o conteúdo integral deve ser removido em até 10 dias após a conclusão.
 
 O dimensionamento final depende de páginas por documento, qualidade do OCR,
 concorrência, quantidade de critérios, número de provedores e SLO. A massa de

@@ -26,6 +26,10 @@ Dependencias de modelos e servicos externos devem registrar regiao, termos de us
 retencao do provedor, controles de treinamento, custo, disponibilidade, limites e
 plano de substituicao.
 
+A retencao interna do produto segue `RETENCAO_DADOS.md`. O prazo de 10 dias nao
+se aplica aos provedores externos, cuja retencao segue os termos contratualmente
+aceitos pela organizacao.
+
 O governador deve manter independencia entre provedores. Claude, OpenAI e Gemini
 executam a mesma avaliacao sem compartilhar respostas. Divergencias permanecem
 visiveis na evidencia; a consolidacao nunca reduz a maior severidade encontrada.

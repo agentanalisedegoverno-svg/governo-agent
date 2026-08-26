@@ -113,14 +113,98 @@ ficam nas pastas correspondentes. Toda mudança deve:
 
 Atestados reais e exemplos identificáveis não devem ser adicionados ao Git.
 
-## 7. Limitações antes de produção
+O mapa completo dos artefatos e o roteiro de perguntas para especialistas estão
+em `INSUMOS_USUARIOS_PRODUTO.md`.
+
+## 7. Retenção e expurgo
+
+O conteúdo controlado pela solução deve ser removido em até 10 dias corridos
+após a conclusão da análise. Isso inclui texto extraído, parecer integral,
+evidências textuais, prompts, respostas, embeddings, caches, temporários e
+backups operacionais. A confirmação de exportação permite exclusão antecipada.
+
+Podem permanecer somente metadados mínimos sem conteúdo documental, como IDs,
+hashes, versões, provedor/modelo, timestamps, classificação final, protocolo de
+exportação e evidência do expurgo. O prazo desses metadados ainda deve ser
+definido pelo proprietário dos dados.
+
+A retenção de dados feita pelos provedores de IA segue suas políticas e os termos
+aceitos pela organização. Ela não altera o prazo de 10 dias nos componentes do
+produto e Zero Data Retention não é requisito de aceite.
+
+A política completa está em `governanca/politicas/RETENCAO_DADOS.md`. A versão
+`0.1` ainda não possui job automático de lifecycle; portanto, não deve receber
+dados reais em ambiente compartilhado até que essa automação seja entregue.
+
+## 8. Diagnóstico e logs
+
+O motor grava eventos JSON Lines em stdout e, por padrão, em
+`.motor-data/logs/motor.jsonl`. O arquivo é rotacionado diariamente e mantém 10
+arquivos anteriores. Em produção, stdout deve ser coletado pela plataforma de
+observabilidade e o prazo deve seguir a política aprovada para metadados.
+
+Cada resposta HTTP possui o cabeçalho `X-Request-ID`. Use esse valor para reunir
+todos os eventos de uma requisição sem procurar pelo conteúdo do documento.
+
+Campos principais:
+
+| Campo | Uso |
+| --- | --- |
+| `event` | Tipo estável do evento operacional |
+| `request_id` | Correlação ponta a ponta da chamada |
+| `stage` | Etapa em que o fluxo estava |
+| `error_code` e `error_type` | Classificação da falha sem resposta sensível |
+| `status_code` e `duration_ms` | Resultado e tempo da operação |
+| `analysis_id`, `case_id` e `document_sha256` | Correlação por metadados |
+| `provider`, `model` e tokens | Diagnóstico e custo da chamada de IA |
+| `stack` | Arquivo, função e linha, sem mensagem ou variáveis locais |
+
+Eventos de falha relevantes:
+
+- `http_request_failed`: erro esperado de autenticação, validação ou domínio;
+- `http_request_unhandled_exception`: falha inesperada com stack sanitizada;
+- `provider_selection_failed`: provedor inválido ou sem credencial;
+- `provider_call_failed`: timeout, limite, erro da API ou resposta inválida;
+- `logging_file_configuration_failed`: arquivo de log indisponível.
+
+Exemplo para consultar as falhas mais recentes no PowerShell:
+
+```powershell
+Get-Content .motor-data/logs/motor.jsonl -Tail 500 |
+  ForEach-Object { $_ | ConvertFrom-Json } |
+  Where-Object { $_.level -in @("WARNING", "ERROR", "CRITICAL") }
+```
+
+Para procurar uma requisição específica:
+
+```powershell
+Select-String -Path .motor-data/logs/motor.jsonl* -SimpleMatch "REQUEST_ID"
+```
+
+Configuração:
+
+```powershell
+$env:MOTOR_ENVIRONMENT = "homologacao"
+$env:MOTOR_LOG_LEVEL = "INFO"
+$env:MOTOR_LOG_FILE = ".motor-data/logs/motor.jsonl"
+$env:MOTOR_LOG_RETENTION_DAYS = "10"
+```
+
+Os logs nunca devem conter PDF, texto extraído, requisito, prompt, resposta
+integral, justificativa do usuário ou chaves. A mensagem original de exceções
+inesperadas também é omitida para impedir que respostas de terceiros vazem.
+
+## 9. Limitações antes de produção
 
 - não há OCR; PDFs sem texto são encaminhados como `ocr_necessario`;
 - não há autenticação de usuário, apenas chave técnica da API;
 - não há banco, object storage, fila, rate limiting ou isolamento por órgão;
 - não há idempotência ou processamento concorrente por fila;
 - não há RAG vetorial nesta etapa; o conjunto selecionado é enviado integralmente;
-- o armazenamento local não implementa retenção nem backup;
+- o armazenamento local ainda não automatiza expurgo, confirmação de exportação
+  nem tratamento de backups conforme a política de 10 dias;
+- os logs locais são adequados ao piloto, mas ainda não há agregador, alertas,
+  métricas, traces distribuídos ou integração com gestão de incidentes;
 - a calibração dos modelos e regras ainda depende da massa descrita em
   `MASSA_TESTES_PRODUTO.md`;
 - modelos configurados precisam ser homologados e fixados por versão.

@@ -82,7 +82,7 @@ modelo, região e parâmetros registrados. Para cada provedor, executar no míni
 - falhas simuladas de autenticação, `429`, timeout, `5xx` e JSON inválido;
 - 15 documentos com prompt injection;
 - 10 casos com citação inexistente;
-- verificação de retenção, treinamento, região e termos contratuais.
+- registro e aceite de retenção, treinamento, região e termos contratuais.
 
 Isso representa **pelo menos 360 chamadas por rodada de homologação**: 240 da
 partição cega, considerando três provedores, e 120 repetições de estabilidade.
@@ -105,9 +105,18 @@ Automatizar pelo menos 45 cenários de contrato:
 - path traversal e identificadores inválidos;
 - concorrência, repetição de requisição e recuperação após falha;
 - garantia de que PDF, chave e texto integral não aparecem em logs.
+- geração de evento para cada falha esperada, com `request_id`, etapa e código;
+- erro inesperado com stack sanitizada e resposta HTTP sem detalhes internos;
+- correlação entre API, extração, provedor, persistência e revisão humana;
+- rotação, indisponibilidade do arquivo e coleta por stdout;
+- expurgo antecipado após exportação confirmada e expurgo obrigatório em D+10;
+- alertas em D+7/D+9, repetição idempotente e falha parcial da rotina de expurgo;
+- exclusão correlacionada em banco, objetos, índices, caches, temporários e backups;
+- preservação apenas dos metadados mínimos de auditoria sem conteúdo documental.
 
 Antes de exposição em rede, acrescentar testes de autorização por órgão/caso,
 rate limiting, isolamento entre usuários, criptografia, backup e restauração.
+A restauração de backup não pode reintroduzir conteúdo cujo prazo já expirou.
 
 ## 8. Critérios de aceite do piloto
 
