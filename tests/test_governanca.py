@@ -64,6 +64,18 @@ class CollectorTests(GitRepoTestCase):
         self.assertEqual(1, len(findings))
         self.assertEqual(["settings.env"], findings[0]["affected_files"])
 
+    def test_deterministic_scanner_ignores_variable_references_and_type_hints(self):
+        self.write_and_track(
+            "manual.md",
+            '$env:MOTOR_API_KEY = "segredo-local-longo"\n'
+            '-H "X-API-Key: $env:MOTOR_API_KEY"\n',
+        )
+        self.write_and_track(
+            "api.py",
+            "def endpoint(x_api_key: Annotated[str | None, Header()] = None): ...\n",
+        )
+        self.assertEqual([], verificar_secrets(self.repo))
+
 
 class PatchTests(unittest.TestCase):
     def test_accepts_normal_text_patch(self):

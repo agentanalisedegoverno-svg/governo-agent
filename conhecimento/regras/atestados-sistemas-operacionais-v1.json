@@ -1,0 +1,89 @@
+{
+  "id": "atestados-sistemas-operacionais-v1",
+  "titulo": "Capacidade técnica em sistemas operacionais",
+  "versao": "1.0.0",
+  "vigente_desde": "2026-08-25",
+  "fonte": "Regra piloto derivada de entrevista com especialista; exige homologação antes de uso real",
+  "template": "analise_atestado.md",
+  "instructions": [
+    "regra_geral_analise.md",
+    "criterios_classificacao.md"
+  ],
+  "skills": [
+    "localizar_evidencia.md",
+    "validar_aderencia.md"
+  ],
+  "criterios": [
+    {
+      "id": "OS-INSTALACAO",
+      "descricao": "Comprovação de instalação de sistemas operacionais",
+      "obrigatorio": true,
+      "termos_aceitos": [
+        "instalação",
+        "implantação"
+      ],
+      "termos_insuficientes": [
+        "suporte",
+        "atendimento"
+      ],
+      "orientacao": "A evidência deve descrever execução da instalação ou implantação, não apenas suporte ao ambiente."
+    },
+    {
+      "id": "OS-CONFIGURACAO",
+      "descricao": "Comprovação de configuração de sistemas operacionais",
+      "obrigatorio": true,
+      "termos_aceitos": [
+        "configuração",
+        "parametrização"
+      ],
+      "termos_insuficientes": [
+        "suporte",
+        "manutenção"
+      ],
+      "orientacao": "A configuração deve estar vinculada aos sistemas ou ambientes avaliados."
+    },
+    {
+      "id": "OS-ADMINISTRACAO",
+      "descricao": "Comprovação de administração de sistemas operacionais",
+      "obrigatorio": true,
+      "termos_aceitos": [
+        "administração",
+        "gerenciamento",
+        "gestão",
+        "operação"
+      ],
+      "termos_insuficientes": [
+        "suporte",
+        "atendimento",
+        "troubleshooting"
+      ],
+      "orientacao": "Suporte isolado não comprova administração. Termos equivalentes exigem descrição explícita de atividades administrativas."
+    },
+    {
+      "id": "OS-WINDOWS",
+      "descricao": "Comprovação explícita de ambiente Microsoft Windows",
+      "obrigatorio": true,
+      "termos_aceitos": [
+        "Windows",
+        "Microsoft Windows"
+      ],
+      "termos_insuficientes": [
+        "Microsoft"
+      ],
+      "orientacao": "A menção deve identificar o sistema operacional Windows, não apenas o fabricante."
+    },
+    {
+      "id": "OS-LINUX",
+      "descricao": "Comprovação explícita de ambiente Linux",
+      "obrigatorio": true,
+      "termos_aceitos": [
+        "Linux",
+        "GNU/Linux"
+      ],
+      "termos_insuficientes": [
+        "Unix"
+      ],
+      "orientacao": "Unix não deve ser considerado equivalente a Linux sem regra adicional homologada."
+    }
+  ]
+}

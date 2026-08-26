@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/caso-teste-atestado-v1.json",
+  "title": "Caso de avaliação do motor de atestados",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "dataset_partition",
+    "document_sha256",
+    "document_type",
+    "requirement",
+    "ruleset_id",
+    "ruleset_version",
+    "expected_result",
+    "criteria",
+    "reviewers",
+    "contains_personal_data",
+    "authorized_for_evaluation"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9_-]{2,63}$"
+    },
+    "dataset_partition": {
+      "enum": ["development", "regression", "blind"]
+    },
+    "document_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "document_type": {
+      "enum": ["pdf_digital", "scan_ocr", "scan_ruim", "pdf_invalido"]
+    },
+    "requirement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "ruleset_id": {
+      "type": "string"
+    },
+    "ruleset_version": {
+      "type": "string"
+    },
+    "expected_result": {
+      "enum": [
+        "ATENDE",
+        "ATENDE_PARCIALMENTE",
+        "NAO_ATENDE",
+        "REVISAO_HUMANA",
+        "ERRO_PROCESSAMENTO"
+      ]
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "expected_status", "page", "excerpt"],
+        "properties": {
+          "id": {"type": "string"},
+          "expected_status": {
+            "enum": ["ATENDIDO", "PARCIAL", "NAO_ATENDIDO", "AMBIGUO"]
+          },
+          "page": {"type": ["integer", "null"], "minimum": 1},
+          "excerpt": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "reviewers": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "adjudicator": {
+      "type": ["string", "null"]
+    },
+    "contains_personal_data": {
+      "type": "boolean"
+    },
+    "authorized_for_evaluation": {
+      "const": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
