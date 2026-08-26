@@ -1,4 +1,6 @@
+import io
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -10,7 +12,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from motor_atestados.conhecimento import RepositorioConhecimento
-from motor_atestados.excecoes import DocumentoInvalido
+from motor_atestados.excecoes import DocumentoInvalido, ProvedorIndisponivel
 from motor_atestados.extracao import extrair_pdf
 from motor_atestados.modelos import (
     AvaliacaoCriterio,
@@ -24,12 +26,14 @@ from motor_atestados.modelos import (
     RevisaoHumanaEntrada,
     StatusCriterio,
 )
+from motor_atestados.observabilidade import FormatadorJson, LOGGER_NAME
 from motor_atestados.api import app
 from motor_atestados.provedores import (
     RespostaProvedor,
     _anthropic,
     _gemini,
     _openai,
+    executar_provedor,
 )
 from motor_atestados.regras import localizar_evidencias_exatas, verificar_evidencias
 from motor_atestados.repositorio import RepositorioAnalises
@@ -175,6 +179,107 @@ class ApiContractTests(unittest.TestCase):
         self.assertNotIn("nao-expor", response.text)
         self.assertNotIn("tambem-nao-expor", response.text)
         self.assertIn("openai", response.json()["provedores_configurados"])
+
+
+class ObservabilityTests(unittest.TestCase):
+    def setUp(self):
+        self.stream = io.StringIO()
+        self.handler = logging.StreamHandler(self.stream)
+        self.handler.setFormatter(FormatadorJson())
+        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger.addHandler(self.handler)
+
+    def tearDown(self):
+        self.logger.removeHandler(self.handler)
+        self.handler.close()
+
+    def events(self):
+        return [json.loads(line) for line in self.stream.getvalue().splitlines()]
+
+    def test_invalid_document_logs_stage_without_sensitive_content(self):
+        segredo = "CONTEUDO-SENSIVEL-NAO-LOGAR"
+        with patch.dict(os.environ, {"MOTOR_API_KEY": "segredo-teste"}):
+            response = TestClient(app).post(
+                "/v1/analyses",
+                headers={"X-API-Key": "segredo-teste", "X-Request-ID": "req-teste-001"},
+                data={
+                    "caso_id": "CASO-LOG-001",
+                    "requisito": segredo,
+                    "conjunto_regras_id": RULESET,
+                    "provedor": "openai",
+                },
+                files={"documento": ("atestado.pdf", segredo.encode(), "application/pdf")},
+            )
+
+        self.assertEqual(422, response.status_code)
+        self.assertEqual("req-teste-001", response.headers["X-Request-ID"])
+        falha = next(item for item in self.events() if item["event"] == "http_request_failed")
+        self.assertEqual("pdf_extraction", falha["stage"])
+        self.assertEqual("documento_invalido", falha["error_code"])
+        self.assertNotIn(segredo, self.stream.getvalue())
+
+    def test_unexpected_error_has_sanitized_stack_and_generic_response(self):
+        segredo = "RESPOSTA-PRIVADA-DO-PROVEDOR"
+        with patch.dict(os.environ, {"MOTOR_API_KEY": "segredo-teste"}), patch(
+            "motor_atestados.api.servico.obter",
+            side_effect=RuntimeError(segredo),
+        ):
+            response = TestClient(app, raise_server_exceptions=False).get(
+                "/v1/analyses/analise-teste",
+                headers={"X-API-Key": "segredo-teste", "X-Request-ID": "req-teste-002"},
+            )
+
+        self.assertEqual(500, response.status_code)
+        self.assertEqual("erro_interno", response.json()["detail"]["codigo"])
+        self.assertNotIn(segredo, response.text)
+        evento = next(
+            item
+            for item in self.events()
+            if item["event"] == "http_request_unhandled_exception"
+        )
+        self.assertEqual("req-teste-002", evento["request_id"])
+        self.assertIn("RuntimeError", evento["error_chain"])
+        self.assertTrue(evento["stack"])
+        self.assertNotIn(segredo, self.stream.getvalue())
+
+    def test_formatter_discards_fields_outside_allowlist(self):
+        record = logging.LogRecord(
+            LOGGER_NAME,
+            logging.ERROR,
+            __file__,
+            1,
+            "failure",
+            (),
+            None,
+        )
+        record.event = "test_failure"
+        record.request_id = "req-safe"
+        record.requisito = "REQUISITO-SECRETO"
+        record.api_key = "EXAMPLE-CREDENTIAL-NOT-REAL"
+        serializado = FormatadorJson().format(record)
+        self.assertIn("req-safe", serializado)
+        self.assertNotIn("REQUISITO-SECRETO", serializado)
+        self.assertNotIn("EXAMPLE-CREDENTIAL-NOT-REAL", serializado)
+
+    def test_provider_failure_does_not_expose_provider_response(self):
+        segredo = "CORPO-SENSIVEL-RETORNADO-PELA-API"
+        fake = ModuleType("openai")
+        fake.OpenAI = lambda: SimpleNamespace(
+            responses=SimpleNamespace(
+                create=lambda **_kwargs: (_ for _ in ()).throw(RuntimeError(segredo))
+            )
+        )
+        with patch.dict(sys.modules, {"openai": fake}), patch.dict(
+            os.environ, {"OPENAI_API_KEY": "teste"}
+        ):
+            with self.assertRaises(ProvedorIndisponivel) as capturada:
+                executar_provedor("openai", "entrada sem dados reais", "primario")
+
+        self.assertNotIn(segredo, str(capturada.exception))
+        falha = next(item for item in self.events() if item["event"] == "provider_call_failed")
+        self.assertEqual("provider_api_error", falha["error_code"])
+        self.assertEqual("RuntimeError", falha["error_type"])
+        self.assertNotIn(segredo, self.stream.getvalue())
 
 
 class ProviderAdapterTests(unittest.TestCase):

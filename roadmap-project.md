@@ -132,12 +132,16 @@ relatorio identifica entradas, prompt, modelo e versoes utilizadas.
 
 ### PRIV-001 - Ciclo de vida dos dados
 
-Classificar dados dos casos, definir base legal, finalidade, acesso, retencao,
-exclusao e tratamento de incidentes. Documentar termos de cada provedor quanto a
-treinamento, retencao, residencia, subprocessadores e Zero Data Retention.
+Aplicar a politica versionada em `governanca/politicas/RETENCAO_DADOS.md`:
+classificar dados, registrar conclusao e exportacao, calcular expiracao, remover
+conteudo em ate 10 dias e tratar incidentes. Documentar e aceitar os termos de
+cada provedor quanto a treinamento, retencao, residencia e subprocessadores;
+Zero Data Retention nao e requisito deste produto.
 
-**Criterio de aceite:** matriz de dados aprovada, prazo de retencao automatizavel
-e evidencia de que somente o minimo necessario e enviado a cada API.
+**Criterio de aceite:** matriz de dados aprovada; `completed_at` e `expires_at`;
+job idempotente com alertas D+7/D+9 e expurgo D+10; exclusao comprovada em
+objetos, banco, indices, caches, temporarios e backups; apenas metadados minimos
+permanecem; evidencia de que somente o necessario e enviado a cada API.
 
 ### OBS-001 - Observabilidade e custos
 

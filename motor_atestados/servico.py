@@ -17,6 +17,7 @@ from motor_atestados.modelos import (
     RevisaoHumanaEntrada,
     StatusCriterio,
 )
+from motor_atestados.observabilidade import atualizar_contexto, registrar_evento
 from motor_atestados.provedores import executar_provedor, montar_entrada
 from motor_atestados.regras import localizar_evidencias_exatas, verificar_evidencias
 from motor_atestados.repositorio import RepositorioAnalises
@@ -90,6 +91,24 @@ class ServicoAtestados:
         provedor: str = "auto",
         provedor_verificador: str | None = None,
     ) -> RegistroAnalise:
+        atualizar_contexto(
+            stage="input_validation",
+            case_id=caso_id,
+            ruleset_id=conjunto_regras_id,
+            provider=provedor if provedor in {"auto", "anthropic", "openai", "gemini"} else "invalid",
+            document_size_bytes=len(documento),
+            analysis_id=None,
+            review_id=None,
+            document_sha256=None,
+            page_count=None,
+            provider_role=None,
+            model=None,
+            result=None,
+            confidence=None,
+            review_required=None,
+            alert_count=None,
+        )
+        registrar_evento("analysis_started")
         if not caso_id.strip() or len(caso_id) > 100 or any(c in caso_id for c in "/\\"):
             raise DocumentoInvalido("Identificador do caso invalido.")
         requisito = requisito.strip()
@@ -98,17 +117,37 @@ class ServicoAtestados:
                 f"O requisito deve possuir entre 1 e {MAX_REQUIREMENT_CHARS} caracteres."
             )
 
+        atualizar_contexto(stage="knowledge_load")
         conjunto = self.conhecimento.carregar_conjunto(conjunto_regras_id)
+        atualizar_contexto(ruleset_version=conjunto.versao)
+        registrar_evento("knowledge_loaded")
+
+        atualizar_contexto(stage="pdf_extraction")
         extraido = extrair_pdf(documento_nome, documento)
+        atualizar_contexto(
+            document_sha256=extraido.sha256,
+            page_count=len(extraido.paginas),
+        )
+        registrar_evento("pdf_extracted")
+
+        atualizar_contexto(stage="prompt_assembly")
         instrucao = self.conhecimento.montar_instrucao(conjunto)
         entrada = montar_entrada(requisito, extraido, conjunto, instrucao)
         if len(entrada) > MAX_MODEL_CONTEXT_CHARS:
             raise DocumentoInvalido(
                 "O documento excede o limite de contexto do piloto; divida-o ou use o pipeline de indexacao."
             )
+        registrar_evento("model_input_assembled", input_chars=len(entrada))
 
+        atualizar_contexto(stage="primary_provider", provider_role="primario")
         primario = self.executor(provedor, entrada, "primario")
+        atualizar_contexto(
+            provider=primario.execucao.provedor,
+            model=primario.execucao.modelo,
+        )
         avaliacoes, alertas = _normalizar_avaliacoes(conjunto, primario.parecer)
+
+        atualizar_contexto(stage="evidence_verification")
         evidencias_ia, alertas_evidencias = verificar_evidencias(
             extraido, conjunto, primario.parecer.evidencias
         )
@@ -122,6 +161,11 @@ class ServicoAtestados:
                 raise DocumentoInvalido("Informe explicitamente o provedor verificador.")
             if primario.execucao.provedor == provedor_verificador:
                 raise DocumentoInvalido("O provedor verificador deve ser independente do primario.")
+            atualizar_contexto(
+                stage="verification_provider",
+                provider=provedor_verificador,
+                provider_role="verificador",
+            )
             verificador = self.executor(provedor_verificador, entrada, "verificador")
             avaliacao_verificador, alertas_verificador = _normalizar_avaliacoes(
                 conjunto, verificador.parecer
@@ -140,6 +184,7 @@ class ServicoAtestados:
             execucoes.append(verificador.execucao)
 
         # Uma afirmacao positiva sem ao menos uma citacao verificavel deve ser abstida.
+        atualizar_contexto(stage="result_consolidation")
         criterios_com_evidencia = {
             criterio
             for evidencia in evidencias
@@ -182,16 +227,31 @@ class ServicoAtestados:
             alertas=list(dict.fromkeys(alertas)),
             provedores=execucoes,
         )
+        atualizar_contexto(
+            stage="analysis_persistence",
+            analysis_id=registro.id,
+            result=registro.resultado.value,
+            confidence=registro.confianca.value,
+            review_required=registro.revisao_humana_obrigatoria,
+            alert_count=len(registro.alertas),
+        )
         self.repositorio.salvar_analise(registro)
+        registrar_evento(
+            "analysis_completed",
+            input_tokens=sum(item.input_tokens for item in execucoes),
+            output_tokens=sum(item.output_tokens for item in execucoes),
+        )
         return registro
 
     def obter(self, analise_id: str) -> EstadoAnalise:
+        atualizar_contexto(stage="analysis_read", analysis_id=analise_id)
         return EstadoAnalise(
             analise=self.repositorio.obter_analise(analise_id),
             revisoes=self.repositorio.listar_revisoes(analise_id),
         )
 
     def revisar(self, analise_id: str, entrada: RevisaoHumanaEntrada) -> RegistroRevisao:
+        atualizar_contexto(stage="human_review_validation", analysis_id=analise_id)
         self.repositorio.obter_analise(analise_id)
         if entrada.decisao in {
             ResultadoAnalise.REVISAO_HUMANA,
@@ -203,5 +263,7 @@ class ServicoAtestados:
             analise_id=analise_id,
             **entrada.model_dump(),
         )
+        atualizar_contexto(stage="human_review_persistence", review_id=revisao.id)
         self.repositorio.salvar_revisao(revisao)
+        registrar_evento("human_review_recorded", result=revisao.decisao.value)
         return revisao
