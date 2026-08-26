@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 .python-packages/
 .pip-bootstrap.pyz
+.motor-data/
+.uv-cache/

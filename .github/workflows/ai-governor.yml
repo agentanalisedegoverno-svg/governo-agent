@@ -63,7 +63,7 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar SDK a partir da base confiavel
-        run: python -m pip install -r governor/requirements-governance.txt
+        run: python -m pip install -r governor/requirements-governance.txt -r governor/requirements-product.txt
 
       - name: Testar governador confiavel
         working-directory: governor
@@ -122,7 +122,7 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar dependencias
-        run: python -m pip install -r requirements-governance.txt
+        run: python -m pip install -r requirements-governance.txt -r requirements-product.txt
 
       - name: Executar testes
         run: python -m unittest discover -s tests -v

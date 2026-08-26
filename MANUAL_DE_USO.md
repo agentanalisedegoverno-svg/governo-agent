@@ -124,6 +124,11 @@ O usuário ou token dos agentes não deve ter permissão de bypass.
 | `governanca/riscos/` | Registro e acompanhamento de riscos |
 | `.github/workflows/` | Automações do GitHub Actions |
 | `roadmap-project.md` | Melhorias priorizadas e critérios de aceite |
+| `motor_atestados/` | API e motor de evidências para validação de atestados |
+| `conhecimento/` | Regras, templates, instruções e skills versionadas |
+
+O uso do novo motor está detalhado em `MANUAL_MOTOR_ATESTADOS.md`. A massa mínima
+para sua homologação está especificada em `MASSA_TESTES_PRODUTO.md`.
 
 ## 7. Como os workflows funcionam
 

@@ -3,6 +3,10 @@
 Para configurar o repositório e executar uma avaliação guiada com o time, consulte
 o [Manual de Uso](MANUAL_DE_USO.md).
 
+O primeiro recorte do **Motor Governado de Validação de Atestados** está em
+`motor_atestados/`. Consulte o [manual do motor](MANUAL_MOTOR_ATESTADOS.md) e a
+[especificação da massa de testes](MASSA_TESTES_PRODUTO.md).
+
 Agente automatizado de análise de processos de contratação pública brasileiros
 (Lei 14.133/2021), orquestrado via GitHub Actions. Cada documento adicionado a
 um caso dispara automaticamente as análises aplicáveis via API da Claude —
