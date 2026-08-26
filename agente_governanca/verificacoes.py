@@ -32,9 +32,23 @@ def _finding(
 
 
 def _parece_exemplo(valor: str, caminho: str) -> bool:
-    valor = valor.lower()
+    valor = valor.strip("'\"").lower()
     return caminho.endswith((".example", ".sample")) or any(
-        marcador in valor for marcador in ("...", "example", "changeme", "replace_me", "<secret>")
+        marcador in valor
+        for marcador in (
+            "...",
+            "example",
+            "changeme",
+            "replace_me",
+            "<secret>",
+            "sua-chave",
+            "segredo-local",
+            "$env:",
+            "${",
+            "annotated[",
+            "os.getenv(",
+            "process.env.",
+        )
     )
 
 
@@ -47,7 +61,7 @@ def verificar_secrets(repo: Path) -> list[dict]:
             continue
         for pattern in SECRET_PATTERNS:
             for match in pattern.finditer(texto):
-                valor = match.group(0)
+                valor = match.group(2) if pattern.groups >= 2 else match.group(0)
                 if _parece_exemplo(valor, relativo):
                     continue
                 linha = texto.count("\n", 0, match.start()) + 1
