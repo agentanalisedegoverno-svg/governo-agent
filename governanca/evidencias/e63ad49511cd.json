@@ -1,0 +1,48 @@
+{
+  "context": {
+    "sha": "e63ad49511cd4c68f798d2bd18a55b038f3dc8b5",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "workflow_dispatch",
+    "run_id": "33334021966"
+  },
+  "result": {
+    "summary": "Nenhum provedor de IA concluiu a analise.",
+    "overall_risk": "none",
+    "decision": "pass",
+    "findings": [],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 0,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      },
+      {
+        "provider": "gemini",
+        "status": "failed",
+        "error_type": "RuntimeError",
+        "message": "Cannot send a request, as the client has been closed."
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
