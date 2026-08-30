@@ -185,6 +185,9 @@ fonte autorizada e decisao humana registrada e reversivel.
 
 ## Ordem recomendada
 
+O acompanhamento operacional em formato `Done`, `Doing` e `To do` esta em
+`CHECKLIST_PROJETO.md`. Esta secao permanece como a ordem tecnica de execucao.
+
 1. Consolidar o Knowledge Repository do MVP com taxonomia, metadata e autoridade.
 2. Resolver `GOV-001` e `GOV-002` para tornar o ciclo executavel.
 3. Entregar `SEC-001`, `REL-001` e `REL-002` antes de enviar casos reais.
