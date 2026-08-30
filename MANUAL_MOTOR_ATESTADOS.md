@@ -7,6 +7,12 @@ regras versionado, consulta um provedor de IA e devolve uma recomendação
 estruturada com critérios, páginas, trechos e alertas. Toda análise exige revisão
 humana antes de produzir uma decisão material.
 
+O motor é o primeiro consumidor executável do Knowledge Repository do projeto.
+Ele não implementa RAG vetorial nesta versão: o conjunto de regras selecionado
+carrega explicitamente os arquivos de `conhecimento/regras/`,
+`conhecimento/templates/`, `conhecimento/instructions/` e
+`conhecimento/skills/`.
+
 O PDF é extraído em memória e não é salvo pelo piloto. A trilha contendo hash,
 evidências, pareceres e revisões é gravada em `.motor-data/`, diretório ignorado
 pelo Git. Para produção, esse repositório local deverá ser substituído por banco
@@ -115,6 +121,11 @@ Atestados reais e exemplos identificáveis não devem ser adicionados ao Git.
 
 O mapa completo dos artefatos e o roteiro de perguntas para especialistas estão
 em `INSUMOS_USUARIOS_PRODUTO.md`.
+
+Para novos domínios, crie primeiro o conhecimento aprovado e depois conecte-o ao
+motor por um novo ruleset JSON. O identificador do arquivo deve coincidir com o
+campo `id` interno, e todas as referências de template, instructions e skills
+devem existir antes da API aceitar o conjunto.
 
 ## 7. Retenção e expurgo
 

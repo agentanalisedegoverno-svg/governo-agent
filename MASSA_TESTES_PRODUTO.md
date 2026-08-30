@@ -6,6 +6,10 @@ A massa deve medir separadamente extração, regras, recuperação, templates,
 instruções, modelos, provedores, API e decisão humana. Uma resposta JSON válida
 não comprova que a conclusão está correta.
 
+Além do motor de atestados, a massa deve validar se o Knowledge Repository está
+organizado de forma recuperável pela IA: nomes consistentes, metadata preenchida,
+status aprovado, autoridade clara e exemplos separados dos casos cegos.
+
 ## 2. Pacote mínimo para o piloto
 
 Preparar **200 casos rotulados**, sem reutilizar o conjunto cego durante a
@@ -61,6 +65,11 @@ variação observada em documentos reais autorizados.
 
 Para cada alteração nesses arquivos, executar:
 
+- validação de metadata (`id`, `type`, `status`, `version`, `owner`,
+  `authority`, `classification`) nos Markdown usados como conhecimento;
+- checagem de que conteúdo material usa `status: approved`;
+- checagem de conflito seguindo a ordem `policy > rule > standard > template >
+  knowledge > example`;
 - validação do JSON Schema em todos os 40 casos de regressão;
 - comparação dos critérios e citações com o baseline anterior;
 - 20 testes de ausência de informação, exigindo abstensão;

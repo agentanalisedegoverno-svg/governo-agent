@@ -4,6 +4,10 @@ Os manifestos de casos devem seguir `schema-caso-teste.json`. O Git recebe apena
 manifestos e documentos totalmente sintéticos ou anonimizados e autorizados.
 PDFs reais permanecem em armazenamento controlado e são referenciados por hash.
 
+No MVP, as avaliações também devem medir a qualidade do Knowledge Repository:
+metadata preenchida, autoridade correta, status aprovado, referências válidas e
+separação entre exemplos de prompt e casos cegos.
+
 Partições permitidas:
 
 - `development`: pode orientar a construção das regras;
@@ -12,3 +16,6 @@ Partições permitidas:
 
 O benchmark futuro deverá ler esses manifestos, executar cada configuração de
 provedor e produzir métricas por resultado, critério, citação, custo e latência.
+
+Alterações em `conhecimento/`, `prompts/` ou `normas/` devem ser avaliadas contra
+a partição de regressão antes de serem usadas em casos reais.
