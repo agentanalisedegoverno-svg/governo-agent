@@ -1,0 +1,67 @@
+{
+  "context": {
+    "sha": "f11a935390bb365369d7d390e27cf18d3ba15625",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "push",
+    "run_id": "33336540691"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de conformidade e engenharia do arquivo requirements-product.txt. As dependências declaradas atendem aos componentes do Motor de Validação de Atestados (FastAPI, Pydantic, PyMuPDF, python-multipart, Uvicorn, Anthropic, OpenAI e Google GenAI) com delimitadores de versão compatíveis e sem introdução de vulnerabilidades conhecidas ou permissões indevidas.",
+    "overall_risk": "low",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-SEC-DEP-001",
+        "title": "Discrepância de versão do SDK Anthropic entre arquivos de requisitos",
+        "category": "maintainability",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "requirements-product.txt e requirements-governance.txt especificam 'anthropic>=0.120.2,<0.121.0', enquanto requirements.txt declara 'anthropic>=1.0.0,<1.1.0'.",
+        "impact": "Risco de incompatibilidade em ambientes de desenvolvimento que instalem múltiplos arquivos de requisitos simultaneamente no mesmo ambiente virtual.",
+        "recommendation": "Harmonizar a versão do SDK da Anthropic em requirements.txt ou unificar a gestão de dependências com arquivo de lock / hashes para garantir reprodutibilidade.",
+        "affected_files": [
+          "requirements-product.txt",
+          "requirements.txt"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
