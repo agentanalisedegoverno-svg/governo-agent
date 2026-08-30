@@ -43,16 +43,17 @@ proximas acoes.
 - Timeout configuravel dos provedores do Governor implementado na branch
   `fix/governor-provider-timeout`, com `AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS`
   e padrao de 180 segundos.
+- Pull Request `#24 fix: limitar timeout dos provedores do Governor` mesclado
+  em `main` em 2026-08-30.
 - Suite automatizada local validada com 44 testes aprovados.
 - Execucao manual da branch `fix/governor-provider-timeout` com Gemini-only
   concluida com sucesso no run `33335848855`.
+- Pull Request de evidencia `#25 governance: avaliacao do commit 494b48ec9086`
+  mesclado em `main`.
+- Pull Request `#27 docs: atualizar checklist apos merges` mesclado em `main`.
 
 ## Doing
 
-- Pull Request `#24 fix: limitar timeout dos provedores do Governor` aberto
-  para levar o timeout de provedores para `main`.
-- Pull Request de evidencia `#25 governance: avaliacao do commit 494b48ec9086`
-  aberto a partir do run manual Gemini-only da branch `#24`.
 - Pull Request Dependabot `#12` aberto para atualizar FastAPI.
 - Pull Request de evidencia antigo `#18` aberto e com conflito em relacao ao
   estado atual de `main`.
@@ -67,12 +68,10 @@ proximas acoes.
 
 ## To do
 
-- Fazer merge do PR `#24` em `main` apos revisao humana.
-- Rodar o AI Governor em `main` com `providers=gemini` e `min_providers=1` apos
-  o merge do PR `#24`, confirmando que o timeout e o Gemini-only estao ativos
-  na branch protegida.
-- Revisar se o PR `#25` deve ser mesclado como evidencia ou fechado para evitar
-  ruido operacional.
+- Rodar novamente o AI Governor em `main` com `providers=gemini` e
+  `min_providers=1`, confirmando que o timeout e o Gemini-only estao ativos na
+  branch protegida. As tentativas anteriores em `main` foram canceladas por
+  novos merges concorrentes antes da etapa de governanca.
 - Revisar o PR `#12` de FastAPI apos checks e conflito/estado de merge.
 - Adicionar `ANTHROPIC_API_KEY` quando a conta Claude API estiver pronta.
 - Resolver cota/faturamento OpenAI ou manter OpenAI fora dos testes temporarios.
