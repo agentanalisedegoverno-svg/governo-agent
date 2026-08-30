@@ -13,6 +13,16 @@ on:
     - cron: "17 8 * * 1"
   workflow_dispatch:
     inputs:
+      providers:
+        description: "Provedores separados por virgula para este teste manual"
+        required: false
+        type: string
+        default: "anthropic,openai,gemini"
+      min_providers:
+        description: "Quorum minimo para este teste manual"
+        required: false
+        type: string
+        default: "2"
       knowledge_pull:
         description: "Consultar fontes externas autorizadas"
         required: false
@@ -132,7 +142,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          AI_GOVERNOR_MIN_PROVIDERS: "2"
+          AI_GOVERNOR_PROVIDERS: ${{ github.event_name == 'workflow_dispatch' && inputs.providers || 'anthropic,openai,gemini' }}
+          AI_GOVERNOR_MIN_PROVIDERS: ${{ github.event_name == 'workflow_dispatch' && inputs.min_providers || '2' }}
           BASE_SHA: ${{ github.event.before }}
           KNOWLEDGE_PULL: ${{ github.event_name == 'schedule' || inputs.knowledge_pull == true }}
         run: |

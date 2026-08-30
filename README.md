@@ -15,6 +15,7 @@ O repositório reúne três componentes independentes:
 Documentação complementar:
 
 - [Arquitetura do MVP](ARQUITETURA.md)
+- [Checklist operacional do projeto](CHECKLIST_PROJETO.md)
 - [Plano do piloto para 10 usuários](PLANO_PILOTO_10_USUARIOS.md)
 - [Manual geral](MANUAL_DE_USO.md)
 - [Manual do Motor de Atestados](MANUAL_MOTOR_ATESTADOS.md)
@@ -168,6 +169,7 @@ flowchart TD
 | `motor_atestados/` | API, domínio, extração, provedores e trilha de evidências |
 | `conhecimento/` | Regras, templates, instructions, skills e exemplos permitidos |
 | `ARQUITETURA.md` | Decisão arquitetural do MVP e evolução para RAG |
+| `CHECKLIST_PROJETO.md` | Status operacional em Done, Doing e To do |
 | `PLANO_PILOTO_10_USUARIOS.md` | Requisitos e sequência para ambiente compartilhado restrito |
 | `schemas/` | Schemas compartilhados, incluindo contrato de `caso.json` |
 | `evals/` | Schema e orientação para a massa de avaliação |
@@ -371,6 +373,11 @@ python -m agente_governanca --knowledge-pull --apply-proposals
 O quórum padrão é de dois provedores independentes entre Claude, OpenAI e Gemini.
 Nenhuma alteração é aplicada diretamente em `main`; evidências e patches são
 propostos em branch própria e dependem de Pull Request e aprovação humana.
+
+Para diagnóstico temporário, o workflow manual do Governor permite informar
+`providers=gemini` e `min_providers=1`. Esse modo serve apenas para testar a
+integração Gemini enquanto OpenAI/Claude não estão disponíveis; o padrão do
+projeto continua quórum `2/3`.
 
 ## Segurança e dados
 

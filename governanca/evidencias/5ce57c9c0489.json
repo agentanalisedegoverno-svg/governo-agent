@@ -1,11 +1,11 @@
 {
   "context": {
-    "sha": "e63ad49511cd4c68f798d2bd18a55b038f3dc8b5",
+    "sha": "5ce57c9c04894f7d06f28260d318ec4b0c6cbabf",
     "branch": "main",
     "repository": "agentanalisedegoverno-svg/governo-agent",
     "actor": "agentanalisedegoverno-svg",
-    "event": "workflow_dispatch",
-    "run_id": "33334021966"
+    "event": "push",
+    "run_id": "33285328867"
   },
   "result": {
     "summary": "Nenhum provedor de IA concluiu a analise.",
@@ -31,14 +31,14 @@
       {
         "provider": "openai",
         "status": "failed",
-        "error_type": "RateLimitError",
-        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+        "error_type": "missing_credentials",
+        "message": "OPENAI_API_KEY nao configurada."
       },
       {
         "provider": "gemini",
         "status": "failed",
-        "error_type": "RuntimeError",
-        "message": "Cannot send a request, as the client has been closed."
+        "error_type": "missing_credentials",
+        "message": "GEMINI_API_KEY nao configurada."
       }
     ],
     "rejected_knowledge_updates": [],
