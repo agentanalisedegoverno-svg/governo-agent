@@ -161,7 +161,8 @@ def _gemini_review(
     from google import genai
 
     model = os.getenv("AI_GOVERNOR_GEMINI_MODEL", "gemini-3.7-flash")
-    interaction = genai.Client().interactions.create(
+    client = genai.Client()
+    interaction = client.interactions.create(
         model=model,
         system_instruction=system_prompt,
         input=user_prompt,
