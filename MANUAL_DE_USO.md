@@ -291,6 +291,26 @@ O Gemini participa da análise do repositório, mas atualizações externas e pa
 dele são descartados nesse processo enquanto sua busca não oferecer restrição
 técnica equivalente por domínio.
 
+### Cenário D.1: teste manual somente com Gemini
+
+Use este cenário apenas para validar conectividade enquanto Claude ou OpenAI ainda
+não estiverem disponíveis. Ele não substitui o quórum governado `2/3`.
+
+1. Acesse `Actions > AI Engineering Governor > Run workflow`.
+2. Selecione a branch que contém a versão mais recente do workflow.
+3. Em `providers`, informe `gemini`.
+4. Em `min_providers`, informe `1`.
+5. Deixe `knowledge_pull` desmarcado.
+6. Execute e confira o painel de modelos.
+
+Resultado esperado:
+
+- `gemini` conclui a análise;
+- `anthropic` e `openai` não são chamados;
+- o relatório registra quórum `1/1`;
+- o uso continua classificado como teste manual até que dois provedores estejam
+  disponíveis.
+
 ### Cenário E: análise de uma licitação sintética
 
 Objetivo: avaliar o agente de domínio sem expor dados reais.
