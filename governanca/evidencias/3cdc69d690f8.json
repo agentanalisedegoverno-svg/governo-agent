@@ -1,0 +1,82 @@
+{
+  "context": {
+    "sha": "3cdc69d690f8c055774889c3970669437f98b407",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "push",
+    "run_id": "33335450359"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de governança das dependências declaradas em `requirements-product.txt`. O arquivo define de forma adequada as dependências de produção para a API FastAPI do motor de atestados e os SDKs dos provedores de IA (Anthropic, OpenAI e Google GenAI). Não foram identificadas vulnerabilidades críticas ou exposições de segredos. Recomenda-se harmonizar as versões de dependências entre os diferentes manifestos do projeto e implementar lockfile com hashes para controle rigoroso da cadeia de suprimentos.",
+    "overall_risk": "low",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-DEP-001",
+        "title": "Divergência na especificação de versão do SDK Anthropic entre manifestos",
+        "category": "maintainability",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "`requirements-product.txt` e `requirements-governance.txt` definem `anthropic>=0.120.2,<0.121.0`, enquanto `requirements.txt` define `anthropic>=1.0.0,<1.1.0`.",
+        "impact": "Inconsistência de dependências pode gerar incompatibilidades em ambientes locais compartilhados ou pipelines que utilizem múltiplos scripts conjuntamente.",
+        "recommendation": "Harmonizar a versão do SDK Anthropic entre `requirements.txt`, `requirements-product.txt` e `requirements-governance.txt`.",
+        "affected_files": [
+          "requirements-product.txt",
+          "requirements-governance.txt",
+          "requirements.txt"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-DEP-002",
+        "title": "Ausência de lockfile com hashes para dependências de produto",
+        "category": "security",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "`requirements-product.txt` utiliza faixas de versão sem arquivo de lock contendo hashes SHA-256 das dependências transitivas.",
+        "impact": "Possibilidade de introdução não intencional de regressões ou dependências transitivas corrompidas durante builds automatizados.",
+        "recommendation": "Implementar processo de geração de lockfile com hashes (ex.: via pip-compile ou ferramenta similar) conforme previsto no item SEC-002 do roadmap.",
+        "affected_files": [
+          "requirements-product.txt"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}

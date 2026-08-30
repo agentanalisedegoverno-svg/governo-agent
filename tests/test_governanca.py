@@ -20,6 +20,7 @@ from agente_governanca.provedores import (
     ProviderReview,
     _gemini_review,
     _openai_review,
+    provider_timeout_seconds,
 )
 from agente_governanca.verificacoes import verificar_secrets
 
@@ -137,7 +138,7 @@ class ProviderAdapterTests(unittest.TestCase):
             )
         )
         fake_openai = ModuleType("openai")
-        fake_openai.OpenAI = lambda: client
+        fake_openai.OpenAI = lambda **_kwargs: client
 
         with patch.dict(sys.modules, {"openai": fake_openai}):
             _openai_review("system", "user", {}, True, ["nist.gov"])
@@ -167,6 +168,20 @@ class ProviderAdapterTests(unittest.TestCase):
 
         self.assertEqual([], review.result["knowledge_updates"])
         self.assertEqual([], review.result["proposed_patches"])
+
+    def test_provider_timeout_uses_configured_positive_value(self):
+        with patch.dict(
+            "os.environ",
+            {"AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS": "12.5"},
+        ):
+            self.assertEqual(12.5, provider_timeout_seconds())
+
+    def test_provider_timeout_falls_back_on_invalid_value(self):
+        with patch.dict(
+            "os.environ",
+            {"AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS": "invalid"},
+        ):
+            self.assertEqual(180.0, provider_timeout_seconds())
 
 
 class PolicyTests(unittest.TestCase):
