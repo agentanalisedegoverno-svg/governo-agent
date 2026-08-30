@@ -1,0 +1,36 @@
+{
+  "context": {
+    "sha": "f11a935390bb365369d7d390e27cf18d3ba15625",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "workflow_dispatch",
+    "run_id": "33336586153"
+  },
+  "result": {
+    "summary": "Nenhum provedor de IA concluiu a analise.",
+    "overall_risk": "none",
+    "decision": "pass",
+    "findings": [],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 1,
+      "successful": 0,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.7-flash\\nPlease retry in 22.311972991s.', 'code': 'too_many_requests'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
