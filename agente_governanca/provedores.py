@@ -8,6 +8,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 
 
+DEFAULT_PROVIDER_TIMEOUT_SECONDS = 180
+
+
 @dataclass
 class ProviderReview:
     provider: str
@@ -28,6 +31,17 @@ PROVIDER_KEYS = {
     "openai": "OPENAI_API_KEY",
     "gemini": "GEMINI_API_KEY",
 }
+
+
+def provider_timeout_seconds() -> float:
+    raw = os.getenv("AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS")
+    if not raw:
+        return float(DEFAULT_PROVIDER_TIMEOUT_SECONDS)
+    try:
+        timeout = float(raw)
+    except ValueError:
+        return float(DEFAULT_PROVIDER_TIMEOUT_SECONDS)
+    return timeout if timeout > 0 else float(DEFAULT_PROVIDER_TIMEOUT_SECONDS)
 
 
 def configured_providers(requested: list[str]) -> tuple[list[str], list[ProviderFailure]]:
@@ -79,7 +93,9 @@ def _anthropic_review(
                 "allowed_domains": allowed_domains,
             }
         ]
-    response = anthropic.Anthropic().messages.create(**kwargs)
+    response = anthropic.Anthropic(timeout=provider_timeout_seconds()).messages.create(
+        **kwargs
+    )
     text = next(
         (block.text for block in response.content if getattr(block, "type", None) == "text"),
         None,
@@ -137,7 +153,7 @@ def _openai_review(
                 "include": ["web_search_call.action.sources"],
             }
         )
-    response = OpenAI().responses.create(**kwargs)
+    response = OpenAI(timeout=provider_timeout_seconds()).responses.create(**kwargs)
     if not response.output_text:
         raise RuntimeError("OpenAI nao retornou texto estruturado.")
     usage = response.usage
@@ -161,7 +177,15 @@ def _gemini_review(
     from google import genai
 
     model = os.getenv("AI_GOVERNOR_GEMINI_MODEL", "gemini-3.7-flash")
-    client = genai.Client()
+    timeout = provider_timeout_seconds()
+    try:
+        from google.genai import types
+
+        client = genai.Client(
+            http_options=types.HttpOptions(timeout=int(timeout * 1000))
+        )
+    except Exception:
+        client = genai.Client()
     interaction = client.interactions.create(
         model=model,
         system_instruction=system_prompt,
