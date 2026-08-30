@@ -10,6 +10,9 @@
 - PRs do agente devem identificar o commit e a evidencia que originaram a proposta.
 - Mudancas em `.github/`, `agente_governanca/` e `governanca/politicas/` exigem
   revisao de CODEOWNER quando esse recurso estiver habilitado.
+- Mudancas em `conhecimento/`, `prompts/`, `normas/`, `evals/` e
+  `ARQUITETURA.md` devem ter aprovacao humana antes de serem usadas em decisao
+  material.
 
 ## Separacao de privilegios
 
@@ -23,3 +26,6 @@ como dados, sem instalar dependencias nem executar scripts desse checkout.
 Uma excecao deve registrar proprietario, justificativa, risco residual, controles
 compensatorios e data de expiracao. O agente pode recomendar uma excecao, mas nao
 pode aprova-la.
+
+Conteudo com `status: draft` pode ser usado para exploracao e construcao do
+piloto, mas nao deve orientar conclusao material sem aceite explicito do revisor.

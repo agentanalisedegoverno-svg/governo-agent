@@ -14,12 +14,25 @@ O repositório reúne três componentes independentes:
 
 Documentação complementar:
 
+- [Arquitetura do MVP](ARQUITETURA.md)
 - [Manual geral](MANUAL_DE_USO.md)
 - [Manual do Motor de Atestados](MANUAL_MOTOR_ATESTADOS.md)
 - [Massa necessária para homologação](MASSA_TESTES_PRODUTO.md)
 - [Insumos que devem ser solicitados aos usuários](INSUMOS_USUARIOS_PRODUTO.md)
 - [Política de retenção e expurgo](governanca/politicas/RETENCAO_DADOS.md)
 - [Roadmap técnico](roadmap-project.md)
+
+## Decisão de MVP
+
+A primeira versão deve ser operada como um **Knowledge Repository governado para
+IA**, com GitHub privado como fonte de verdade. O conhecimento fica em Markdown e
+JSON versionados, os workflows validam mudanças e a IA lê somente os artefatos
+necessários para gerar análise, proposta, checklist ou parecer.
+
+Esse desenho evita custo operacional de servidor, banco vetorial e RAG completo
+na V1. O RAG entra depois, quando houver volume, massa homologada e necessidade
+real de recuperação semântica. A arquitetura consolidada está em
+[`ARQUITETURA.md`](ARQUITETURA.md).
 
 ## Arquitetura atual
 
@@ -145,6 +158,7 @@ flowchart TD
 | --- | --- |
 | `motor_atestados/` | API, domínio, extração, provedores e trilha de evidências |
 | `conhecimento/` | Regras, templates, instructions, skills e exemplos permitidos |
+| `ARQUITETURA.md` | Decisão arquitetural do MVP e evolução para RAG |
 | `evals/` | Schema e orientação para a massa de avaliação |
 | `agente/` | Pipeline dos 13 prompts documentais existentes |
 | `agente_governanca/` | AI Engineering Governor |

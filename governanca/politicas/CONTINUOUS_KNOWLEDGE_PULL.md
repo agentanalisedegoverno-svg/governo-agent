@@ -12,3 +12,8 @@ atual, a fonte autorizada, o impacto, a mudanca recomendada e as consequencias.
 
 O agente nao deve editar silenciosamente politicas, ampliar suas fontes, reduzir
 controles ou considerar uma recomendacao vigente antes do merge humano.
+
+No MVP, o Knowledge Pull atualiza conhecimento versionado, nao um indice vetorial
+em producao. Toda recomendacao deve resultar em Markdown, JSON ou ADR revisavel
+por Pull Request. Bancos, embeddings e MCP Server fazem parte da evolucao futura
+descrita em `../../ARQUITETURA.md`.

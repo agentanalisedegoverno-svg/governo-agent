@@ -3,11 +3,17 @@
 ## 1. Finalidade
 
 Este manual orienta a configuração, operação e avaliação controlada do
-`licitacoes-agent`. O repositório contém dois componentes distintos:
+`licitacoes-agent`. A decisão de MVP é usar o GitHub privado como fonte de
+verdade de um Knowledge Repository governado para IA, com Markdown e JSON
+versionados antes de introduzir RAG, banco vetorial ou servidor permanente.
 
-1. **Agente de licitações:** analisa documentos de contratações públicas e gera
+O repositório contém três componentes distintos:
+
+1. **Knowledge Repository:** organiza regras, templates, prompts, normas,
+   exemplos e políticas em arquivos versionados.
+2. **Agente de licitações:** analisa documentos de contratações públicas e gera
    relatórios em Markdown. Atualmente usa a API Claude/Anthropic.
-2. **AI Engineering Governor:** avalia continuamente código, arquitetura,
+3. **AI Engineering Governor:** avalia continuamente código, arquitetura,
    infraestrutura, segurança, IA, privacidade e governança. Usa um painel
    independente com Claude, GPT/OpenAI e Gemini.
 
@@ -113,6 +119,8 @@ O usuário ou token dos agentes não deve ter permissão de bypass.
 
 | Caminho | Conteúdo |
 | --- | --- |
+| `ARQUITETURA.md` | Arquitetura do MVP, fluxos e evolução planejada |
+| `conhecimento/` | Regras, templates, instruções, skills, exemplos e futura taxonomia de produto |
 | `agente/` | Execução das análises de licitações |
 | `agente_governanca/` | AI Engineering Governor |
 | `casos/` | Documentos e relatórios de cada processo |
@@ -125,12 +133,29 @@ O usuário ou token dos agentes não deve ter permissão de bypass.
 | `.github/workflows/` | Automações do GitHub Actions |
 | `roadmap-project.md` | Melhorias priorizadas e critérios de aceite |
 | `motor_atestados/` | API e motor de evidências para validação de atestados |
-| `conhecimento/` | Regras, templates, instruções e skills versionadas |
 | `INSUMOS_USUARIOS_PRODUTO.md` | Checklist do que coletar com usuários e especialistas |
 | `governanca/politicas/RETENCAO_DADOS.md` | Regra de expurgo em até 10 dias na solução |
 
 O uso do novo motor está detalhado em `MANUAL_MOTOR_ATESTADOS.md`. A massa mínima
 para sua homologação está especificada em `MASSA_TESTES_PRODUTO.md`.
+
+## 6.1 Como evoluir o conhecimento
+
+O conteúdo reutilizável deve ser decomposto em componentes pequenos. Em vez de
+guardar apenas uma proposta completa em PDF, extraia seções aprovadas de escopo,
+arquitetura, requisitos não funcionais, premissas, riscos, SLA, suporte e itens
+fora de escopo. O PDF original só deve permanecer no Git quando for público,
+autorizado e útil como referência; documentos reais de clientes ou órgãos devem
+ficar em armazenamento controlado.
+
+Todo Markdown relevante deve receber metadata com `id`, `type`, `status`,
+`version`, `owner`, `authority` e `classification`. Para uso material, a IA deve
+preferir conteúdo com `status: approved`. Em caso de conflito, a ordem de
+autoridade é:
+
+```text
+policy > rule > standard > template > knowledge > example
+```
 
 ## 7. Como os workflows funcionam
 

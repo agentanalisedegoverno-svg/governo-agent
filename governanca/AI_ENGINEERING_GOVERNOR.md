@@ -7,6 +7,11 @@ projeto. Ele analisa codigo, arquitetura, infraestrutura, componentes de IA,
 seguranca, privacidade e governanca de dados, produzindo evidencias e propostas
 tecnicas para decisao humana.
 
+Na arquitetura do MVP, o governador tambem protege a evolucao do Knowledge
+Repository. Mudancas em regras, templates, prompts, normas, politicas, exemplos e
+schemas devem ser tratadas como mudancas de produto, com evidencia, revisao e
+aprovacao humana.
+
 ## Autoridade
 
 O agente pode:
@@ -42,8 +47,8 @@ especializados nem revisao humana.
 No Continuous Knowledge Pull, somente provedores com busca capaz de restringir
 tecnicamente os dominios autorizados podem propor atualizacoes de politica. O
 Gemini participa da revisao do repositorio, mas suas atualizacoes externas sao
-e patches sao descartados durante esse processo enquanto sua API de busca nao
-oferecer controle equivalente.
+descartadas durante esse processo enquanto sua API de busca nao oferecer controle
+equivalente.
 
 ## Escopo de avaliacao
 
@@ -51,7 +56,8 @@ Cada avaliacao deve considerar, quando aplicavel:
 
 1. Corretude, testes, observabilidade e manutencao do software.
 2. Acoplamento, limites, contratos, escalabilidade e divida arquitetural.
-3. Modelos, prompts, agentes, RAG, embeddings, ferramentas, MCPs e avaliacoes.
+3. Modelos, prompts, agentes, Knowledge Repository, RAG futuro, embeddings,
+   ferramentas, MCPs e avaliacoes.
 4. Identidade, redes, supply chain, secrets, vulnerabilidades e configuracoes.
 5. Classificacao, minimizacao, residencia, retencao, lineage e acesso a dados.
 6. Privacidade, disponibilidade, recuperacao, custos e dependencia de fornecedor.

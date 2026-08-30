@@ -16,6 +16,10 @@ por pessoas responsáveis.
 | Instruções gerais e classificação | `conhecimento/instructions/*.md` | Especialista de negócio, jurídico e risco |
 | Skills de análise | `conhecimento/skills/*.md` | Especialista de negócio e equipe de IA |
 | Exemplos aprovados e anonimizados | `conhecimento/examples/` | Especialistas e responsável pelos dados |
+| Conhecimento de produtos | `conhecimento/products/` | Dono do produto e arquitetura |
+| Conhecimento de fabricantes/APIs | `conhecimento/vendors/` | Especialistas técnicos e fornecedores |
+| Checklists operacionais | `conhecimento/checklists/` | Analistas e qualidade |
+| Schemas de conhecimento | `conhecimento/schemas/` | Equipe de IA e engenharia |
 | Schema da massa de avaliação | `evals/schema-caso-teste.json` | Equipe de qualidade e especialistas |
 | Manifestos de teste | Armazenamento controlado, no formato de `evals/` | Equipe de qualidade |
 | Atestado real | Upload na API; não fica no Git | Usuário autorizado |
@@ -27,6 +31,33 @@ por pessoas responsáveis.
 O conjunto piloto atualmente disponível é
 `conhecimento/regras/atestados-sistemas-operacionais-v1.json`. Ele é apenas um
 exemplo e não representa regra homologada para uso material.
+
+## 2.1 Metadata obrigatória para novos artefatos
+
+Sempre que um Markdown for usado como conhecimento reutilizável, iniciar o
+arquivo com front matter:
+
+```yaml
+---
+id: KNOWLEDGE-EXEMPLO-001
+type: knowledge
+domain: licitacoes
+status: draft
+version: 0.1
+owner: area-responsavel
+authority: knowledge
+classification: internal
+---
+```
+
+Valores recomendados para `status`: `draft`, `approved`, `deprecated`.
+
+Valores recomendados para `authority`: `policy`, `rule`, `standard`, `template`,
+`knowledge`, `example`. A precedência em conflitos é:
+
+```text
+policy > rule > standard > template > knowledge > example
+```
 
 ## 3. Pacote obrigatório a solicitar aos usuários
 

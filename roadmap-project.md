@@ -185,11 +185,37 @@ fonte autorizada e decisao humana registrada e reversivel.
 
 ## Ordem recomendada
 
-1. Resolver `GOV-001` e `GOV-002` para tornar o ciclo executavel.
-2. Entregar `SEC-001`, `REL-001` e `REL-002` antes de enviar casos reais.
-3. Construir `DATA-001`, `AI-001` e `PROD-001` para validar qualidade juridica.
-4. Aprovar `PRIV-001` antes de ampliar usuarios, orgaos ou volume de documentos.
-5. Evoluir observabilidade, idempotencia e Knowledge Pull com evidencias mensuraveis.
+1. Consolidar o Knowledge Repository do MVP com taxonomia, metadata e autoridade.
+2. Resolver `GOV-001` e `GOV-002` para tornar o ciclo executavel.
+3. Entregar `SEC-001`, `REL-001` e `REL-002` antes de enviar casos reais.
+4. Construir `DATA-001`, `AI-001` e `PROD-001` para validar qualidade juridica.
+5. Aprovar `PRIV-001` antes de ampliar usuarios, orgaos ou volume de documentos.
+6. Evoluir observabilidade, idempotencia e Knowledge Pull com evidencias mensuraveis.
+
+## Arquitetura de evolucao
+
+O caminho aprovado para o MVP esta em `ARQUITETURA.md`. A decisao central e
+evitar banco, vector store e servidor permanente na V1, usando GitHub privado,
+Markdown, JSON, busca textual e revisao humana. PostgreSQL, pgvector, MCP Server,
+fila, object storage, OCR e RBAC entram somente quando a massa homologada e o
+volume justificarem a complexidade.
+
+### KREP-001 - Taxonomia do Knowledge Repository
+
+Criar a estrutura expandida de `conhecimento/` para `products/`, `vendors/`,
+`checklists/` e `schemas/`, mantendo compatibilidade com o motor atual.
+
+**Criterio de aceite:** README do conhecimento documenta a taxonomia; novos
+artefatos possuem local definido; nada exige RAG ou banco para funcionar.
+
+### KREP-002 - Metadata e hierarquia de autoridade
+
+Padronizar front matter de Markdown com `id`, `type`, `domain`, `status`,
+`version`, `owner`, `authority` e `classification`. Definir a precedencia
+`policy > rule > standard > template > knowledge > example`.
+
+**Criterio de aceite:** exemplos documentados; checklist de revisao inclui status
+e autoridade; a IA e instruida a preferir `status: approved` em uso material.
 
 ## Indicadores de acompanhamento
 
