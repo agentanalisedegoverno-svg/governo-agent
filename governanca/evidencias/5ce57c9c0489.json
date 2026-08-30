@@ -1,0 +1,48 @@
+{
+  "context": {
+    "sha": "5ce57c9c04894f7d06f28260d318ec4b0c6cbabf",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "push",
+    "run_id": "33285328867"
+  },
+  "result": {
+    "summary": "Nenhum provedor de IA concluiu a analise.",
+    "overall_risk": "none",
+    "decision": "pass",
+    "findings": [],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 0,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "OPENAI_API_KEY nao configurada."
+      },
+      {
+        "provider": "gemini",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "GEMINI_API_KEY nao configurada."
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
