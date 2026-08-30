@@ -208,6 +208,8 @@ Criar a estrutura expandida de `conhecimento/` para `products/`, `vendors/`,
 **Criterio de aceite:** README do conhecimento documenta a taxonomia; novos
 artefatos possuem local definido; nada exige RAG ou banco para funcionar.
 
+**Status:** implementado no repositorio local.
+
 ### KREP-002 - Metadata e hierarquia de autoridade
 
 Padronizar front matter de Markdown com `id`, `type`, `domain`, `status`,
@@ -216,6 +218,20 @@ Padronizar front matter de Markdown com `id`, `type`, `domain`, `status`,
 
 **Criterio de aceite:** exemplos documentados; checklist de revisao inclui status
 e autoridade; a IA e instruida a preferir `status: approved` em uso material.
+
+**Status:** implementado no repositorio local para os artefatos Markdown usados
+pelo motor, com schema e testes automatizados.
+
+### PILOT-001 - Ambiente compartilhado para 10 usuarios
+
+Provisionar um servidor unico protegido para homologacao compartilhada, conforme
+`PLANO_PILOTO_10_USUARIOS.md`.
+
+**Criterio de aceite:** API acessivel apenas ao grupo piloto, smoke test com PDF
+sintetico, logs sanitizados e revisao humana registrada.
+
+**Status:** plano versionado; execucao depende de infraestrutura e secrets fora
+do repositorio.
 
 ## Indicadores de acompanhamento
 

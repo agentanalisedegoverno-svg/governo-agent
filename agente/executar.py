@@ -10,7 +10,6 @@ análises aplicáveis. Duas formas de disparo:
 """
 import argparse
 import fnmatch
-import json
 import os
 from pathlib import Path
 
@@ -19,6 +18,7 @@ import anthropic
 from agente.documentos import blocos_documento_caso
 from agente.normas import blocos_normas, garantir_normas_atualizadas
 from agente.prompts import buscar_prompt, carregar_indice, carregar_texto_prompt
+from agente.seguranca import carregar_caso_json, resolver_caso
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CASOS_DIR = BASE_DIR / "casos"
@@ -54,10 +54,8 @@ def _identificar_tarefas_automaticas(indice: list[dict], arquivos_alterados: lis
 
 
 def _carregar_metadados_caso(caso_id: str) -> dict:
-    caminho = CASOS_DIR / caso_id / "caso.json"
-    if caminho.exists():
-        return json.loads(caminho.read_text(encoding="utf-8"))
-    return {}
+    caso_dir = resolver_caso(CASOS_DIR, caso_id)
+    return carregar_caso_json(caso_dir)
 
 
 def _montar_conteudo_usuario(
@@ -90,9 +88,8 @@ def executar_prompt(
 
     metadados = _carregar_metadados_caso(caso_id)
     instrucao = carregar_texto_prompt(prompt_meta, contexto=metadados)
-    docs_caso = blocos_documento_caso(
-        CASOS_DIR / caso_id, prompt_meta.get("entrada_glob"), documento_extra
-    )
+    caso_dir = resolver_caso(CASOS_DIR, caso_id)
+    docs_caso = blocos_documento_caso(caso_dir, prompt_meta.get("entrada_glob"), documento_extra)
     conteudo = _montar_conteudo_usuario(manifest_normas, docs_caso, instrucao)
 
     modelo = prompt_meta.get("modelo") or MODELO_PADRAO
