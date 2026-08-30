@@ -31,18 +31,31 @@ proximas acoes.
   `429 insufficient_quota` / `credit_balance_exhausted`.
 - Bug do cliente Gemini corrigido em `agente_governanca/provedores.py` e
   `motor_atestados/provedores.py`.
+- Pull Request `#20 fix: manter cliente Gemini ativo` mesclado em `main` em
+  2026-08-30.
 - Workflow manual do AI Governor preparado para teste temporario somente com
   Gemini: `providers=gemini`, `min_providers=1`.
 - Execucao remota somente com Gemini validada com sucesso no run
   `33334775581`.
 - Pull Request de evidencia do run Gemini-only criado pelo Governor:
   `#21 governance: avaliacao do commit ef445c69b479`.
-- Suite automatizada local validada antes desta rodada com 42 testes aprovados.
+- Dependabot PRs `#15` e `#14` mesclados em `main`.
+- Timeout configuravel dos provedores do Governor implementado na branch
+  `fix/governor-provider-timeout`, com `AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS`
+  e padrao de 180 segundos.
+- Suite automatizada local validada com 44 testes aprovados.
+- Execucao manual da branch `fix/governor-provider-timeout` com Gemini-only
+  concluida com sucesso no run `33335848855`.
 
 ## Doing
 
-- Pull Request `#20 fix: manter cliente Gemini ativo` aberto para levar a
-  correcao do Gemini e o modo manual Gemini-only para `main`.
+- Pull Request `#24 fix: limitar timeout dos provedores do Governor` aberto
+  para levar o timeout de provedores para `main`.
+- Pull Request de evidencia `#25 governance: avaliacao do commit 494b48ec9086`
+  aberto a partir do run manual Gemini-only da branch `#24`.
+- Pull Request Dependabot `#12` aberto para atualizar FastAPI.
+- Pull Request de evidencia antigo `#18` aberto e com conflito em relacao ao
+  estado atual de `main`.
 - Validacao temporaria do AI Governor com apenas Gemini enquanto Claude e
   OpenAI nao estao disponiveis para quorum completo.
 - Organizacao das Pull Requests de evidencia abertas pelo Governor para reduzir
@@ -54,9 +67,13 @@ proximas acoes.
 
 ## To do
 
-- Fazer merge do PR `#20` em `main` apos revisao humana.
+- Fazer merge do PR `#24` em `main` apos revisao humana.
 - Rodar o AI Governor em `main` com `providers=gemini` e `min_providers=1` apos
-  o merge, confirmando que a correcao esta ativa na branch protegida.
+  o merge do PR `#24`, confirmando que o timeout e o Gemini-only estao ativos
+  na branch protegida.
+- Revisar se o PR `#25` deve ser mesclado como evidencia ou fechado para evitar
+  ruido operacional.
+- Revisar o PR `#12` de FastAPI apos checks e conflito/estado de merge.
 - Adicionar `ANTHROPIC_API_KEY` quando a conta Claude API estiver pronta.
 - Resolver cota/faturamento OpenAI ou manter OpenAI fora dos testes temporarios.
 - Retornar ao quorum padrao `2/3` assim que pelo menos dois provedores
