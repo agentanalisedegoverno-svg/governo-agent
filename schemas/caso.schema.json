@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/licitacoes-agent/schemas/caso.schema.json",
+  "title": "Caso de licitacao",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["numero_processo", "objeto"],
+  "properties": {
+    "numero_processo": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "objeto": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 2000
+    },
+    "tema": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "edital_tema": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "documento": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "estado_analise": {
+      "type": "string",
+      "enum": ["draft", "ready", "running", "review", "completed", "blocked"]
+    },
+    "versao_schema": {
+      "type": "string"
+    }
+  }
+}
+

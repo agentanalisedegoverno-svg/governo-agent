@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/licitacoes-agent/conhecimento/schemas/metadata.schema.json",
+  "title": "Metadata de artefato Markdown do Knowledge Repository",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "type",
+    "domain",
+    "status",
+    "version",
+    "owner",
+    "authority",
+    "classification"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9_-]{2,95}$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["policy", "rule", "standard", "template", "knowledge", "example", "checklist"]
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 2
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "approved", "deprecated"]
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2
+    },
+    "authority": {
+      "type": "string",
+      "enum": ["policy", "rule", "standard", "template", "knowledge", "example"]
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "restricted"]
+    }
+  }
+}
+

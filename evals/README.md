@@ -19,3 +19,7 @@ provedor e produzir métricas por resultado, critério, citação, custo e latê
 
 Alterações em `conhecimento/`, `prompts/` ou `normas/` devem ser avaliadas contra
 a partição de regressão antes de serem usadas em casos reais.
+
+Os testes locais tambem verificam o contrato minimo de `schemas/caso.schema.json`
+e a metadata dos Markdown de conhecimento. Isso evita consumir tokens com casos
+malformados ou conhecimento sem governanca minima.

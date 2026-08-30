@@ -15,6 +15,7 @@ O repositório reúne três componentes independentes:
 Documentação complementar:
 
 - [Arquitetura do MVP](ARQUITETURA.md)
+- [Plano do piloto para 10 usuários](PLANO_PILOTO_10_USUARIOS.md)
 - [Manual geral](MANUAL_DE_USO.md)
 - [Manual do Motor de Atestados](MANUAL_MOTOR_ATESTADOS.md)
 - [Massa necessária para homologação](MASSA_TESTES_PRODUTO.md)
@@ -135,6 +136,14 @@ Controles atuais do motor:
 - API protegida por `X-API-Key`;
 - análises e revisões gravadas sem sobrescrever o registro anterior.
 
+Controles atuais do agente documental:
+
+- resolução segura de `caso` e `documento`;
+- bloqueio de caminhos absolutos, `..` e arquivos fora de `casos/{id}`;
+- limite de 20 MB por documento e 25 documentos por prompt;
+- envio apenas de PDFs suportados;
+- validação mínima de `caso.json` antes de consumir tokens.
+
 ### Governança de commits e Pull Requests
 
 ```mermaid
@@ -159,6 +168,8 @@ flowchart TD
 | `motor_atestados/` | API, domínio, extração, provedores e trilha de evidências |
 | `conhecimento/` | Regras, templates, instructions, skills e exemplos permitidos |
 | `ARQUITETURA.md` | Decisão arquitetural do MVP e evolução para RAG |
+| `PLANO_PILOTO_10_USUARIOS.md` | Requisitos e sequência para ambiente compartilhado restrito |
+| `schemas/` | Schemas compartilhados, incluindo contrato de `caso.json` |
 | `evals/` | Schema e orientação para a massa de avaliação |
 | `agente/` | Pipeline dos 13 prompts documentais existentes |
 | `agente_governanca/` | AI Engineering Governor |
@@ -262,6 +273,9 @@ instância**, pois a persistência local ainda não suporta múltiplas réplicas
 
 Esse ambiente é apenas piloto. A chave técnica compartilhada não substitui
 identidade individual, autorização por órgão ou segregação entre casos.
+
+O roteiro operacional para aproximadamente 10 usuários está em
+[`PLANO_PILOTO_10_USUARIOS.md`](PLANO_PILOTO_10_USUARIOS.md).
 
 ### Arquitetura-alvo para produção
 

@@ -1,3 +1,14 @@
+---
+id: SKILL-LOCALIZAR-EVIDENCIA-001
+type: knowledge
+domain: atestados
+status: draft
+version: 0.1
+owner: produto-licitacoes
+authority: knowledge
+classification: internal
+---
+
 # Skill: localizar evidência
 
 Para cada critério:

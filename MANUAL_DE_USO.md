@@ -120,7 +120,9 @@ O usuário ou token dos agentes não deve ter permissão de bypass.
 | Caminho | Conteúdo |
 | --- | --- |
 | `ARQUITETURA.md` | Arquitetura do MVP, fluxos e evolução planejada |
+| `PLANO_PILOTO_10_USUARIOS.md` | Roteiro para ambiente compartilhado restrito |
 | `conhecimento/` | Regras, templates, instruções, skills, exemplos e futura taxonomia de produto |
+| `schemas/` | Schemas compartilhados, incluindo `caso.schema.json` |
 | `agente/` | Execução das análises de licitações |
 | `agente_governanca/` | AI Engineering Governor |
 | `casos/` | Documentos e relatórios de cada processo |
@@ -156,6 +158,21 @@ autoridade é:
 ```text
 policy > rule > standard > template > knowledge > example
 ```
+
+Os arquivos Markdown usados diretamente como conhecimento reutilizável são
+validados por testes automatizados. Novos artefatos em `conhecimento/` devem
+seguir `conhecimento/schemas/metadata.schema.json`.
+
+## 6.2 Segurança dos casos
+
+O agente documental valida entradas antes de ler arquivos:
+
+- `caso` deve ser um diretório existente dentro de `casos/`;
+- `documento` não pode ser absoluto nem conter `..`;
+- somente PDFs são enviados ao provedor;
+- cada documento deve ter até 20 MB;
+- cada prompt pode anexar até 25 documentos;
+- `caso.json` deve seguir o contrato mínimo de `schemas/caso.schema.json`.
 
 ## 7. Como os workflows funcionam
 

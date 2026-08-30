@@ -20,6 +20,9 @@ pastas previstas são:
 - `schemas/`: contratos JSON Schema para validar regras, requisitos,
   propostas, manifestos e metadata.
 
+As pastas `products/`, `vendors/`, `checklists/` e `schemas/` ja existem para
+receber a expansao do MVP sem exigir RAG ou banco vetorial.
+
 O atestado real e o requisito de uma demanda não ficam aqui. O atestado entra por
 upload na API, e o requisito é um campo da requisição. PDFs reais usados em
 avaliações permanecem em armazenamento controlado e são referenciados por hash.
@@ -50,3 +53,6 @@ fontes internas, aplique:
 ```text
 policy > rule > standard > template > knowledge > example
 ```
+
+O contrato formal fica em `schemas/metadata.schema.json` e e exercitado pelos
+testes em `../tests/test_knowledge_repository.py`.

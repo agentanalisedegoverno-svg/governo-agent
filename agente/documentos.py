@@ -6,6 +6,13 @@ são enviados como base64 diretamente na mensagem.
 import base64
 from pathlib import Path
 
+from agente.seguranca import (
+    EntradaCasoInvalida,
+    MAX_DOCUMENTOS_POR_PROMPT,
+    resolver_documento,
+    validar_arquivo_documento,
+)
+
 MEDIA_TYPES_SUPORTADOS = {".pdf": "application/pdf"}
 
 
@@ -31,16 +38,28 @@ def blocos_documento_caso(
     12 - linguagem simples, que não tem um padrão fixo de gatilho).
     """
     caminhos: list[Path] = []
+    raiz = caso_dir.resolve()
     for glob in entrada_glob or []:
-        caminhos.extend(sorted(caso_dir.glob(glob)))
+        if Path(glob).is_absolute() or ".." in Path(glob).parts:
+            raise EntradaCasoInvalida(f"Glob de entrada invalido: {glob}")
+        for caminho in sorted(caso_dir.glob(glob)):
+            resolvido = caminho.resolve()
+            if raiz not in resolvido.parents:
+                raise EntradaCasoInvalida("Documento fora do caso informado.")
+            if resolvido not in caminhos:
+                caminhos.append(resolvido)
     if documento_extra:
-        caminho_extra = caso_dir / documento_extra
-        if caminho_extra.exists() and caminho_extra not in caminhos:
+        caminho_extra = resolver_documento(caso_dir, documento_extra)
+        if caminho_extra not in caminhos:
             caminhos.append(caminho_extra)
+
+    if len(caminhos) > MAX_DOCUMENTOS_POR_PROMPT:
+        raise EntradaCasoInvalida("Quantidade de documentos acima do limite por prompt.")
 
     blocos = []
     for caminho in caminhos:
         if caminho.is_file():
+            validar_arquivo_documento(caminho)
             bloco = _bloco_de_arquivo(caminho)
             if bloco:
                 blocos.append(bloco)

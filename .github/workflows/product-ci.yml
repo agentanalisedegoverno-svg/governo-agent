@@ -4,15 +4,21 @@ on:
   push:
     paths:
       - "motor_atestados/**"
+      - "agente/**"
       - "conhecimento/**"
+      - "schemas/**"
       - "tests/test_motor_atestados.py"
+      - "tests/test_knowledge_repository.py"
       - "requirements-product.txt"
       - ".github/workflows/product-ci.yml"
   pull_request:
     paths:
       - "motor_atestados/**"
+      - "agente/**"
       - "conhecimento/**"
+      - "schemas/**"
       - "tests/test_motor_atestados.py"
+      - "tests/test_knowledge_repository.py"
       - "requirements-product.txt"
       - ".github/workflows/product-ci.yml"
 
@@ -36,5 +42,5 @@ jobs:
       - name: Instalar dependências do produto
         run: python -m pip install -r requirements-product.txt
 
-      - name: Executar testes do motor
-        run: python -m unittest discover -s tests -p "test_motor_atestados.py" -v
+      - name: Executar testes do produto
+        run: python -m unittest discover -s tests -p "test_*atestados.py" -v && python -m unittest tests.test_knowledge_repository -v

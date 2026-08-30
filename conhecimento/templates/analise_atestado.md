@@ -1,3 +1,14 @@
+---
+id: TEMPLATE-ANALISE-ATESTADO-001
+type: template
+domain: atestados
+status: draft
+version: 0.1
+owner: produto-licitacoes
+authority: template
+classification: internal
+---
+
 # Template de análise de atestado
 
 Compare o requisito informado com as evidências literais do documento.
