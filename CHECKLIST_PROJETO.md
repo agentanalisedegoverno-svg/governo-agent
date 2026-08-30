@@ -1,13 +1,76 @@
-# Checklist Operacional do Projeto
+# Painel Operacional do Projeto
 
-Snapshot: 2026-08-30
+Snapshot: `2026-08-30`
 
-Este arquivo registra o estado pratico do projeto em tres grupos: `Done`,
-`Doing` e `To do`. O roadmap tecnico continua em `roadmap-project.md`; este
-checklist serve para acompanhamento rapido de execucao, dependencias externas e
-proximas acoes.
+Este painel resume o estado do projeto para decisao rapida. O detalhe tecnico
+continua em [`roadmap-project.md`](roadmap-project.md), a arquitetura em
+[`ARQUITETURA.md`](ARQUITETURA.md) e o piloto em
+[`PLANO_PILOTO_10_USUARIOS.md`](PLANO_PILOTO_10_USUARIOS.md).
 
-## Done
+## Visao Executiva
+
+| Frente | Estado | Proximo movimento |
+| --- | --- | --- |
+| MVP tecnico | Pronto para piloto controlado | Preparar massa sintetica e ambiente restrito |
+| Governanca | Operando em modo degradado | Resolver cotas/chaves para voltar ao quorum `2/3` |
+| Gemini | Integrado, mas limitado por cota free tier | Aguardar janela de quota ou ativar plano/cota |
+| OpenAI | Chave existe, sem credito API | Ativar billing ou manter fora dos testes |
+| Claude | Pendente | Adicionar `ANTHROPIC_API_KEY` quando disponivel |
+| PRs abertas | Somente evidencias automatizadas | Revisar/mesclar ou fechar #31 e #32 |
+
+## Placar
+
+| Indicador | Valor |
+| --- | ---: |
+| Testes locais na `main` | `44 OK` |
+| PRs tecnicos mesclados | `#20`, `#24` |
+| PRs Dependabot mesclados | `#14`, `#15`, `#12` |
+| Execucao Gemini-only bem-sucedida | `33335848855` |
+| Execucao Gemini-only em `main` | `429 quota exceeded` |
+| PRs abertas sem conflito | `#31`, `#32` |
+| PRs abertas com conflito | `0` |
+
+## Fluxo Atual
+
+```mermaid
+flowchart LR
+    A["Repositorio privado"] --> B["Knowledge Repository"]
+    B --> C["Motor de Atestados 0.1"]
+    B --> D["AI Engineering Governor"]
+    C --> E["Piloto controlado"]
+    D --> F{"Quorum de IA"}
+    F -->|Gemini OK, OpenAI/Claude pendentes| G["Modo degradado"]
+    F -->|2 provedores ativos| H["Governanca plena"]
+    G --> I["Resolver cotas e chaves"]
+    I --> H
+```
+
+## Quadro Kanban
+
+| Done | Doing | To do |
+| --- | --- | --- |
+| README, arquitetura e plano do piloto consolidados | Revisar PRs de evidencia `#31` e `#32` | Adicionar `ANTHROPIC_API_KEY` |
+| Knowledge Repository inicial versionado | Operar Governor em modo degradado | Ativar credito OpenAI ou remover do teste temporario |
+| Validacoes de seguranca do agente documental | Preparar massa sintetica de homologacao | Retornar quorum padrao `2/3` |
+| Motor de Atestados `0.1` executavel | Organizar evidencias antigas do Governor | Provisionar ambiente piloto para ate 10 usuarios |
+| Gemini corrigido e validado em branch | Documentar cada decisao por commit/PR | Implementar lifecycle D+7/D+9/D+10 |
+| Timeout dos provedores do Governor em `main` | | Evoluir RBAC, OCR, banco, fila e observabilidade |
+
+## Proxima Melhor Acao
+
+1. Revisar os PRs de evidencia `#31` e `#32`.
+2. Nao rodar novos testes Gemini-only em sequencia enquanto a cota free tier
+   estiver esgotada.
+3. Definir se OpenAI tera billing agora ou se ficara desabilitado na fase de
+   piloto.
+4. Adicionar Claude quando a chave estiver disponivel.
+5. Rodar novamente o Governor com quorum `2/3` quando dois provedores estiverem
+   operacionais.
+
+## Trilhas
+
+<details open>
+<summary><strong>Done</strong></summary>
 
 - Documentacao principal consolidada no `README.md`, com arquitetura, execucao
   local, seguranca, limitacoes e operacao do piloto.
@@ -39,10 +102,9 @@ proximas acoes.
   `33334775581`.
 - Pull Request de evidencia do run Gemini-only criado pelo Governor:
   `#21 governance: avaliacao do commit ef445c69b479`.
-- Dependabot PRs `#15` e `#14` mesclados em `main`.
-- Timeout configuravel dos provedores do Governor implementado na branch
-  `fix/governor-provider-timeout`, com `AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS`
-  e padrao de 180 segundos.
+- Dependabot PRs `#15`, `#14` e `#12` mesclados em `main`.
+- Timeout configuravel dos provedores do Governor implementado com
+  `AI_GOVERNOR_PROVIDER_TIMEOUT_SECONDS` e padrao de 180 segundos.
 - Pull Request `#24 fix: limitar timeout dos provedores do Governor` mesclado
   em `main` em 2026-08-30.
 - Suite automatizada local validada com 44 testes aprovados.
@@ -51,14 +113,18 @@ proximas acoes.
 - Pull Request de evidencia `#25 governance: avaliacao do commit 494b48ec9086`
   mesclado em `main`.
 - Pull Request `#27 docs: atualizar checklist apos merges` mesclado em `main`.
+- Conflitos dos PRs abertos corrigidos; nao ha PR aberta marcada como `DIRTY`.
 
-## Doing
+</details>
 
-- Pull Request Dependabot `#12` aberto para atualizar FastAPI.
-- Pull Request de evidencia antigo `#18` aberto e com conflito em relacao ao
-  estado atual de `main`.
-- Validacao temporaria do AI Governor com apenas Gemini enquanto Claude e
-  OpenAI nao estao disponiveis para quorum completo.
+<details open>
+<summary><strong>Doing</strong></summary>
+
+- Pull Requests de evidencia `#31` e `#32` abertas, ambas sem conflito textual.
+- Validacao temporaria do AI Governor com apenas Gemini enquanto Claude e OpenAI
+  nao estao disponiveis para quorum completo.
+- Tratamento da cota Gemini free tier: o run `33336586153` retornou
+  `429 quota exceeded` para `generate_content_free_tier_requests`.
 - Organizacao das Pull Requests de evidencia abertas pelo Governor para reduzir
   ruido operacional.
 - Preparacao da primeira homologacao do fluxo com massa sintetica e sem dados
@@ -66,21 +132,21 @@ proximas acoes.
 - Documentacao operacional sendo mantida no repositorio para que as proximas
   decisoes fiquem rastreaveis por commit.
 
-## To do
+</details>
 
-- Rodar novamente o AI Governor em `main` com `providers=gemini` e
-  `min_providers=1`, confirmando que o timeout e o Gemini-only estao ativos na
-  branch protegida. As tentativas anteriores em `main` foram canceladas por
-  novos merges concorrentes antes da etapa de governanca.
-- Revisar o PR `#12` de FastAPI apos checks e conflito/estado de merge.
+<details open>
+<summary><strong>To do</strong></summary>
+
 - Adicionar `ANTHROPIC_API_KEY` quando a conta Claude API estiver pronta.
 - Resolver cota/faturamento OpenAI ou manter OpenAI fora dos testes temporarios.
+- Aguardar ou ampliar cota Gemini antes de repetir validacoes manuais em alta
+  frequencia.
 - Retornar ao quorum padrao `2/3` assim que pelo menos dois provedores
   independentes estiverem operacionais.
 - Revisar, fechar ou fazer merge das PRs de evidencia antigas, mantendo somente
   evidencias uteis e atuais.
-- Confirmar protecao de `main` com PR obrigatoria, aprovacao humana,
-  conversas resolvidas e CODEOWNERS.
+- Confirmar protecao de `main` com PR obrigatoria, aprovacao humana, conversas
+  resolvidas e CODEOWNERS.
 - Considerar migracao para GitHub Team se for necessario enforcement real de
   rulesets em repositorio privado.
 - Preparar ambiente piloto unico para ate 10 usuarios, com VPN ou rede privada,
@@ -96,12 +162,23 @@ proximas acoes.
 - Definir baseline de custo, latencia, tokens, taxa de quorum e qualidade das
   citacoes com a massa de homologacao.
 
-## Pendencias que dependem do usuario
+</details>
 
-- Informar quando `ANTHROPIC_API_KEY` estiver disponivel.
-- Confirmar se a cota/faturamento OpenAI sera ativada agora ou se OpenAI ficara
-  desabilitada ate segunda fase.
-- Aprovar ou orientar o destino das Pull Requests abertas no GitHub.
-- Definir onde o piloto para 10 usuarios sera hospedado e quem tera acesso.
-- Fornecer ou autorizar a criacao da massa sintetica de documentos para
-  homologacao.
+## Pendencias Do Usuario
+
+| Pendencia | Impacto se continuar pendente |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Governor nao fecha quorum `2/3` sem outro provedor alem do Gemini |
+| Credito OpenAI API | OpenAI segue retornando `insufficient_quota` |
+| Cota Gemini | Testes manuais podem retornar `429 quota exceeded` |
+| Local do piloto | Nao ha ambiente compartilhado para os 10 usuarios |
+| Massa sintetica | Nao ha homologacao juridica/tecnica antes de dados reais |
+
+## Evidencias Recentes
+
+| Evidencia | Resultado | Observacao |
+| --- | --- | --- |
+| Run `33335848855` | Sucesso | Gemini-only validado na branch de timeout |
+| Run `33336586153` | Falha controlada | Gemini retornou limite de cota free tier |
+| PR `#31` | Aberto | Evidencia de push em `main` |
+| PR `#32` | Aberto | Evidencia do Gemini-only em `main` com quota excedida |
