@@ -164,7 +164,8 @@ def _gemini(entrada: str, papel: str) -> RespostaProvedor:
     from google import genai
 
     modelo = os.getenv("ATESTADOS_GEMINI_MODEL", "gemini-3.7-flash")
-    resposta = genai.Client().interactions.create(
+    client = genai.Client()
+    resposta = client.interactions.create(
         model=modelo,
         system_instruction=SYSTEM_PROMPT,
         input=entrada,

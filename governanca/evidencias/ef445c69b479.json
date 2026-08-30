@@ -1,0 +1,78 @@
+{
+  "context": {
+    "sha": "ef445c69b479a960fa89b7517be794e5c9a4c9fb",
+    "branch": "feat/motor-validacao-atestados",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "workflow_dispatch",
+    "run_id": "33334775581"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de governança concluída. O repositório apresenta maturidade arquitetural e de segurança adequada para o escopo de MVP e piloto local restrito. Foram observados controles robustos como isolamento de dados de casos na governança, validação determinística de metadados do Knowledge Repository, verificação literal de citações em PDF e sanitização de logs de observabilidade. As principais recomendações concentram-se na implementação futura do ciclo de vida e expurgo automatizado de 10 dias dos dados locais (.motor-data), no desacoplamento multi-modelo do agente de licitações documental e na estruturação de autenticação/isolamento por usuário antes de exposições além do piloto restrito.",
+    "overall_risk": "medium",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-GOV-DATA-RETENTION-001",
+        "title": "Ausência de campos de ciclo de vida e rotina de expurgo automatizado no motor",
+        "category": "privacy",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "O modelo RegistroAnalise em motor_atestados/modelos.py registra apenas criado_em, não contendo completed_at e expires_at, e o repositório motor_atestados/repositorio.py ainda não executa rotina de expurgo automático em D+10 conforme estipulado na política governanca/politicas/RETENCAO_DADOS.md.",
+        "impact": "Em ambiente compartilhado prolongado, dados de análises e trechos documentais podem permanecer armazenados em disco além da janela aprovada de 10 dias caso não haja exclusão manual.",
+        "recommendation": "Adicionar os campos completed_at e expires_at ao contrato de RegistroAnalise e implementar rotina idempotente de limpeza/expurgo para análises expiradas antes do início do piloto com múltiplos usuários.",
+        "affected_files": [
+          "motor_atestados/modelos.py",
+          "motor_atestados/repositorio.py",
+          "motor_atestados/servico.py"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-AI-MULTI-MODEL-001",
+        "title": "Agente de análise documental acoplado a provedor único",
+        "category": "maintainability",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "O módulo agente/executar.py utiliza diretamente o cliente Anthropic e modelo padrão claude-opus-5, diferentemente do motor_atestados e agente_governanca que já operam com múltiplos provedores homologados.",
+        "impact": "Risco de indisponibilidade ou bloqueio operacional da esteira de análise documental em caso de interrupção ou exaustão de cota no provedor primário.",
+        "recommendation": "Evoluir o agente de licitações para consumir o gateway de provedores ou suportar fallback parametrizável entre Claude, OpenAI e Gemini conforme planejado no item AI-002 do roadmap.",
+        "affected_files": [
+          "agente/executar.py"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [
+      {
+        "title": "[gemini] ADR-0001 - MVP como Knowledge Repository Governado",
+        "status": "proposed",
+        "context": "Operação inicial com baixo custo e governança estrita via Git/Markdown/JSON antes da introdução de banco vetorial e RAG complexo.",
+        "decision": "Manter o GitHub privado e o sistema de arquivos versionado como fonte de verdade de regras, templates, prompts e metadados estruturados para consumo dos motores de IA.",
+        "consequences": "Custos mínimos de infraestrutura e auditabilidade simplificada por diffs Git, postergando persistência multi-tenant distribuída e busca semântica para fases posteriores à homologação de regras."
+      }
+    ],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "complete",
+    "quorum": {
+      "minimum": 1,
+      "successful": 1,
+      "reached": true
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}

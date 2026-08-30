@@ -372,6 +372,11 @@ O quórum padrão é de dois provedores independentes entre Claude, OpenAI e Gem
 Nenhuma alteração é aplicada diretamente em `main`; evidências e patches são
 propostos em branch própria e dependem de Pull Request e aprovação humana.
 
+Para diagnóstico temporário, o workflow manual do Governor permite informar
+`providers=gemini` e `min_providers=1`. Esse modo serve apenas para testar a
+integração Gemini enquanto OpenAI/Claude não estão disponíveis; o padrão do
+projeto continua quórum `2/3`.
+
 ## Segurança e dados
 
 - mantenha o repositório privado;
