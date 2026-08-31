@@ -1,0 +1,89 @@
+{
+  "context": {
+    "sha": "8893c8a486feab25c09a701bf8a28ce9a43fa679",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "schedule",
+    "run_id": "33372483159"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de governança concluída para o repositório licitacoes-agent. A arquitetura de Knowledge Repository para a versão 0.1 e o Motor de Atestados apresentam base técnica sólida, testes automatizados e isolamento de segurança nos fluxos determinísticos. Foram identificados pontos de melhoria relativos ao ciclo de vida de dados (retenção e expurgo de 10 dias) e resiliência nas chamadas a provedores de IA.",
+    "overall_risk": "medium",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-DAT-RET-001",
+        "title": "Ausência de campos de ciclo de vida (completed_at e expires_at) em RegistroAnalise",
+        "category": "data_governance",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "Em motor_atestados/modelos.py, a classe RegistroAnalise define apenas o campo criado_em, não registrando completed_at nem expires_at conforme preconizado na seção 3 da política governanca/politicas/RETENCAO_DADOS.md.",
+        "impact": "Impossibilita o cálculo padronizado e a automação do expurgo D+10 diretamente no modelo de dados das análises persistidas.",
+        "recommendation": "Adicionar os campos opcionais completed_at e expires_at ao modelo RegistroAnalise e preenchê-los na finalização do serviço em motor_atestados/servico.py.",
+        "affected_files": [
+          "motor_atestados/modelos.py",
+          "motor_atestados/servico.py"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-RES-ENG-002",
+        "title": "Cliente Anthropic no agente documental instanciado sem timeout explícito",
+        "category": "availability",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "Em agente/executar.py, a instanciação anthropic.Anthropic() é executada sem parâmetro de timeout explícito na chamada messages.create, dependendo dos padrões do SDK.",
+        "impact": "Em caso de degradação da API ou problemas de conectividade, a execução no GitHub Actions pode aguardar o tempo limite total do job em vez de falhar de forma previsível e controlada.",
+        "recommendation": "Definir timeout explícito (ex.: 180 segundos) na instanciação de anthropic.Anthropic() em agente/executar.py.",
+        "affected_files": [
+          "agente/executar.py"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [
+      {
+        "title": "[gemini] ADR-0002: Implementação de Metadados de Lifecycle e Job de Expurgo Local",
+        "status": "proposed",
+        "context": "A política RETENCAO_DADOS.md estabelece prazo máximo de 10 dias para retenção de conteúdo processado. O motor 0.1 opera com persistência local em .motor-data sem expurgo automatizado.",
+        "decision": "Padronizar campos completed_at e expires_at em RegistroAnalise e desenvolver comando de manutenção/expurgo periódico para varredura e remoção de análises expiradas em D+10.",
+        "consequences": "Garante rastreabilidade do ciclo de vida dos dados temporários e viabiliza a conformidade antes da disponibilização em ambiente compartilhado para o piloto de 10 usuários."
+      }
+    ],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
