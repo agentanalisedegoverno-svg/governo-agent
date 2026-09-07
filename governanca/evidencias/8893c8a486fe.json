@@ -1,0 +1,109 @@
+{
+  "context": {
+    "sha": "8893c8a486feab25c09a701bf8a28ce9a43fa679",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "schedule",
+    "run_id": "34100888768"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de governança concluída com sucesso. O repositório apresenta maturidade elevada nos controles determinísticos de segurança (sanitização de logs, validação de entradas contra path traversal, verificação literal de evidências e política HITL em pull requests). Foram identificadas recomendações de evolução arquitetural e governança de dados para o ciclo de vida e retenção em `.motor-data/` antes do uso com dados reais em ambiente compartilhado.",
+    "overall_risk": "medium",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-GOV-DATA-001",
+        "title": "Ausência de campos de expurgo e rotina automatizada de ciclo de vida no motor de atestados",
+        "category": "data_governance",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "Em 'motor_atestados/modelos.py', 'RegistroAnalise' registra apenas 'criado_em'. Arquivos em '.motor-data/analises/' e '.motor-data/revisoes/' são gravados sem metadados de 'completed_at' ou 'expires_at' e sem rotina de exclusão em D+10, conforme estipulado em 'governanca/politicas/RETENCAO_DADOS.md'.",
+        "impact": "Possibilidade de retenção indevida de dados além do limite de 10 dias estabelecido na política se dados reais forem submetidos antes da entrega da rotina automática de expurgo.",
+        "recommendation": "Incluir 'completed_at' e 'expires_at' no modelo 'RegistroAnalise' e implementar comando/job de expurgo de análises expiradas antes do piloto compartilhado.",
+        "affected_files": [
+          "motor_atestados/modelos.py",
+          "motor_atestados/servico.py",
+          "motor_atestados/repositorio.py",
+          "governanca/politicas/RETENCAO_DADOS.md"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-SEC-AUTH-001",
+        "title": "Autenticação por chave técnica compartilhada única no MVP",
+        "category": "security",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "'motor_atestados/api.py' utiliza 'exigir_chave_api' validando 'MOTOR_API_KEY' de forma global via 'X-API-Key', sem identificação individualizada do requisitante na camada HTTP.",
+        "impact": "Rastreabilidade de usuário depende exclusivamente do campo preenchido no payload da revisão humana ou de controle perimetral externo (VPN/proxy).",
+        "recommendation": "Manter a operação estritamente em rede privada/VPN durante a fase V1 (conforme PLANO_PILOTO_10_USUARIOS.md) e planejar a introdução de autenticação OIDC/RBAC na versão 2.0.",
+        "affected_files": [
+          "motor_atestados/api.py",
+          "PLANO_PILOTO_10_USUARIOS.md",
+          "ARQUITETURA.md"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-AI-ARCH-001",
+        "title": "Acoplamento exclusivo a provedor único no pipeline legado de licitações",
+        "category": "ai",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "'agente/executar.py' e 'agente/normas.py' utilizam exclusivamente a API da Anthropic (Claude) e recursos proprietários como Files API, ao contrário de 'motor_atestados' e 'agente_governanca' que já são multi-modelo.",
+        "impact": "Indisponibilidade ou esgotamento de quota na Anthropic inviabiliza as análises documentais automatizadas de licitações.",
+        "recommendation": "Evoluir 'agente/' para utilizar gateway agnóstico e independente de modelo, alinhando com os padrões definidos em 'motor_atestados/provedores.py' e no item AI-002 do roadmap.",
+        "affected_files": [
+          "agente/executar.py",
+          "agente/normas.py",
+          "roadmap-project.md"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [
+      {
+        "title": "[gemini] ADR-0002: Automação do Ciclo de Vida e Expurgo em D+10 no Motor de Atestados",
+        "status": "proposed",
+        "context": "A política 'RETENCAO_DADOS.md' estabelece retenção máxima de 10 dias após a conclusão da análise para documentos, trechos, prompts e pareceres na infraestrutura controlada. Atualmente, a versão 0.1 armazena registros append-only em '.motor-data/' sem expurgo automatizado.",
+        "decision": "Adicionar os campos 'completed_at' e 'expires_at' ao registro imutável da análise e criar rotina idempotente de limpeza periódica que remova conteúdo confidencial preservando apenas metadados mínimos de auditoria.",
+        "consequences": "Garante conformidade estrita com as políticas de privacidade e dados antes da liberação do ambiente piloto para múltiplos usuários."
+      }
+    ],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
