@@ -1,0 +1,92 @@
+{
+  "context": {
+    "sha": "8893c8a486feab25c09a701bf8a28ce9a43fa679",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "schedule",
+    "run_id": "36397867387"
+  },
+  "result": {
+    "summary": "gemini: Avaliacao de governanca concluida para o repositorio. A arquitetura do MVP como Knowledge Repository governado apresenta separacao adequada entre planos de produto, governanca e analise documental. Os controles deterministicos de seguranca (validacao de caminhos, limites de tamanho de upload, isolamento de dados no coletor e protecao contra autoalteracao no governador) estao devidamente implementados e cobertos por testes unitarios. Recomenda-se atencao a divida tecnica documentada sobre o lifecycle automatico de retencao de dados (D+10) e a harmonizacao de dependencias.",
+    "overall_risk": "low",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-GOV-DATA-001",
+        "title": "Rotina automatizada de expurgo e campos de ciclo de vida pendentes no motor de atestados",
+        "category": "data_governance",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "O modelo RegistroAnalise em motor_atestados/modelos.py nao possui os campos completed_at e expires_at, e a persistencia em .motor-data/ nao possui rotina automatizada de expurgo em D+10, conforme documentado na secao 7 de governanca/politicas/RETENCAO_DADOS.md.",
+        "impact": "Para o piloto local inicial com dados sinteticos o risco e baixo, mas o uso com dados reais em ambiente compartilhado exigira a exclusao programada de analises para conformidade com a politica de retencao.",
+        "recommendation": "Implementar completed_at, expires_at e job idempotente de expurgo com alertas em D+7/D+9 e exclusao em D+10 antes de liberar o ambiente compartilhado com dados reais.",
+        "affected_files": [
+          "motor_atestados/modelos.py",
+          "motor_atestados/servico.py",
+          "governanca/politicas/RETENCAO_DADOS.md"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-MAINT-001",
+        "title": "Divergencia de especificacao de versao do SDK Anthropic entre requisitos",
+        "category": "maintainability",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "requirements.txt define anthropic>=1.0.0,<1.1.0 para o agente documental legado, enquanto requirements-product.txt e requirements-governance.txt utilizam anthropic>=0.120.2,<0.121.0.",
+        "impact": "Embora os workflows executem em ambientes isolados, a divergencia pode gerar comportamento inconsistente em chamadas a APIs beta caso dependencias sejam instaladas conjuntamente.",
+        "recommendation": "Alinhar e unificar a versao base do SDK Anthropic em todos os arquivos de requisitos.",
+        "affected_files": [
+          "requirements.txt",
+          "requirements-product.txt",
+          "requirements-governance.txt"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [
+      {
+        "title": "[gemini] ADR-0001: MVP como Knowledge Repository Governado",
+        "status": "proposed",
+        "context": "Necessidade de operacao inicial com baixo custo e governanca sem introduzir complexidade precoce de banco vetorial ou filas.",
+        "decision": "Operar a V1 utilizando o repositorio Git privado como fonte da verdade, conhecimento em Markdown e JSON estruturado, busca textual e revisao humana obrigatoria.",
+        "consequences": "Minimizacao de custos e superficie operacional no piloto; necessidade de revisao manual e ausencia de recuperacao semantica automatizada nesta fase."
+      }
+    ],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
