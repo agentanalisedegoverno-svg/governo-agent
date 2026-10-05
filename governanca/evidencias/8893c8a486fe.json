@@ -1,0 +1,83 @@
+{
+  "context": {
+    "sha": "8893c8a486feab25c09a701bf8a28ce9a43fa679",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "schedule",
+    "run_id": "37346208887"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de engenharia e governança concluída. O repositório apresenta maturidade arquitetural sólida para o MVP estruturado como Knowledge Repository governado. Foram implementadas camadas defensivas robustas contra prompt injection, sanitização estrita de telemetria/logs para evitar vazamento de dados documentais ou chaves, e validações determinísticas de entrada em todos os componentes de ingestão. Destacam-se como recomendações para as próximas fases a automação do ciclo de vida e expurgo de dados (política de 10 dias) antes do uso com dados reais e a expansão multi-modelo do pipeline de análise documental legado.",
+    "overall_risk": "low",
+    "decision": "pass_with_recommendations",
+    "findings": [
+      {
+        "id": "GEMINI-GOV-DATA-001",
+        "title": "Rotina automatizada de expurgo e controle de ciclo de vida (D+10) pendente de implementação",
+        "category": "data_governance",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "Conforme documentado em governanca/politicas/RETENCAO_DADOS.md (seção 7) e motor_atestados/repositorio.py, os registros locais em .motor-data/ são gravados em modo append-only, mas ainda não possuem job idempotente de expurgo temporal (completed_at + 10 dias) nem alertas D+7/D+9.",
+        "impact": "Risco de retenção residual de metadados ou pareceres locais além da janela autorizada de 10 dias se a limpeza manual não for executada durante a operação do piloto.",
+        "recommendation": "Implementar rotina de lifecycle em segundo plano ou tarefa agendada que calcule expires_at, emita alertas em D+7 e purgue os dados locais no marco D+10 antes de autorizar o uso com documentos reais em ambiente compartilhado.",
+        "affected_files": [
+          "governanca/politicas/RETENCAO_DADOS.md",
+          "motor_atestados/repositorio.py",
+          "motor_atestados/servico.py"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-ARCH-002",
+        "title": "Acoplamento exclusivo do pipeline documental legado ao provedor Anthropic",
+        "category": "ai",
+        "severity": "low",
+        "confidence": "high",
+        "evidence": "Em agente/executar.py e agente/normas.py, as análises dos 13 prompts de licitação dependem diretamente da Anthropic Messages e Files API (claude-opus-5), ao contrário do motor_atestados e do agente_governanca, que já operam com abstração multi-provedor (Claude, OpenAI e Gemini).",
+        "impact": "Menor resiliência e dependência de um único fornecedor para a frente de análise documental de processos licitatórios.",
+        "recommendation": "Evoluir o componente agente/ para adotar a camada de gateway agnóstico de provedores e validação de schema já consolidada em motor_atestados/provedores.py.",
+        "affected_files": [
+          "agente/executar.py",
+          "agente/normas.py"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
