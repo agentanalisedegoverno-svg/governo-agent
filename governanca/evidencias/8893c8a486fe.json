@@ -1,0 +1,134 @@
+{
+  "context": {
+    "sha": "8893c8a486feab25c09a701bf8a28ce9a43fa679",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "schedule",
+    "run_id": "38287288470"
+  },
+  "result": {
+    "summary": "gemini: Avaliação de governança de engenharia realizada sobre o repositório. O projeto apresenta avanços relevantes na governança documental, testes determinísticos e observabilidade sanitizada no motor de atestados. Contudo, foram identificadas vulnerabilidades arquiteturais e operacionais críticas para a disponibilidade e conformidade: (1) bloqueio do event loop do FastAPI por chamadas síncronas bloqueantes de IA e extração de PDF dentro de rota 'async def', podendo causar negação de serviço durante o piloto compartilhado; (2) ausência de tratamento para PDFs protegidos por senha ou corrompidos, expondo a API a erros 500 não tratados; (3) ausência dos campos obrigatórios de retenção de dados ('completed_at' e 'expires_at') em 'RegistroAnalise' conforme estipulado em RETENCAO_DADOS.md; e (4) operação do governador em modo degradado sem quórum multi-modelo confiável devido a cotas esgotadas e credenciais ausentes.",
+    "overall_risk": "high",
+    "decision": "changes_required",
+    "findings": [
+      {
+        "id": "GEMINI-GOV-ARCH-001",
+        "title": "Bloqueio do Event Loop do FastAPI por Execução Síncrona de IA e PyMuPDF",
+        "category": "availability",
+        "severity": "high",
+        "confidence": "high",
+        "evidence": "Em motor_atestados/api.py, a rota 'POST /v1/analyses' é declarada como 'async def criar_analise', mas invoca diretamente 'servico.analisar(...)'. Este método realiza processamento CPU intensivo ('extrair_pdf') e chamadas síncronas de rede com latência indeterminada para APIs externas de IA ('executar_provedor'). No FastAPI/Uvicorn, funções 'async def' executam na thread principal do event loop; chamadas síncronas bloqueiam completamente todas as outras requisições concorrentes e health checks.",
+        "impact": "Degradação severa de disponibilidade. No ambiente de piloto compartilhado (previsto para até 10 usuários em servidor único), uma única requisição de validação congelará a aplicação para os demais usuários até a conclusão da inferência.",
+        "recommendation": "Despachar a execução síncrona de 'servico.analisar' para uma threadpool gerenciada utilizando 'starlette.concurrency.run_in_threadpool' ou 'asyncio.to_thread', liberando o loop de eventos para atender requisições concorrentes.",
+        "affected_files": [
+          "motor_atestados/api.py",
+          "motor_atestados/servico.py"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-SEC-002",
+        "title": "Ausência de Tratamento para PDFs Protegidos ou Corrompidos no Extrator",
+        "category": "maintainability",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "Em motor_atestados/extracao.py ('extrair_pdf'), o código verifica se o documento abre via PyMuPDF, mas não valida 'documento.is_encrypted' nem captura exceções durante a iteração de páginas em 'documento.load_page(i).get_text(\"text\")'. PDFs protegidos por senha ou com fluxos de objetos danificados lançam exceções não tratadas do PyMuPDF.",
+        "impact": "Exceções não tratadas propagam até o middleware global e geram respostas HTTP 500 inesperadas, dificultando o diagnóstico pelo cliente e violando o contrato de erros de validação de documentos da API (HTTP 422 / DocumentoInvalido).",
+        "recommendation": "Verificar 'documento.is_encrypted' e proteger a leitura de páginas com bloco try/except convertendo falhas de extração em 'DocumentoInvalido'.",
+        "affected_files": [
+          "motor_atestados/extracao.py"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-PRIV-003",
+        "title": "Inconformidade com a Política de Retenção de Dados no Registro da Análise",
+        "category": "privacy",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "A política 'governanca/politicas/RETENCAO_DADOS.md' estipula que a conclusão da análise deve registrar 'completed_at' e calcular 'expires_at' (máximo D+10). No modelo 'RegistroAnalise' (motor_atestados/modelos.py) e na persistência em 'motor_atestados/repositorio.py', apenas 'criado_em' é registrado, sem marcos temporais de expurgo ou ciclo de vida.",
+        "impact": "Risco de descumprimento de LGPD e governança de dados. Arquivos JSON gravados em '.motor-data/analises/' contêm trechos literais de atestados e requisitos sem metadados para auditoria de expurgo em D+7, D+9 e D+10.",
+        "recommendation": "Adicionar os campos 'completed_at' e 'expires_at' ao schema 'RegistroAnalise' e calcular a expiração no momento da persistência pelo 'ServicoAtestados'.",
+        "affected_files": [
+          "motor_atestados/modelos.py",
+          "motor_atestados/servico.py",
+          "governanca/politicas/RETENCAO_DADOS.md"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-AI-004",
+        "title": "Operação da Governança Multi-Modelo em Modo Degradado por Falta de Quórum",
+        "category": "ai",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "Conforme registrado em CHECKLIST_PROJETO.md, o governador está operando em modo degradado: OpenAI sem crédito ('429 insufficient_quota'), Gemini com limite free tier excedido ('429 quota exceeded') e Claude pendente de 'ANTHROPIC_API_KEY'. O quórum formal mínimo de 2 provedores independentes não está sendo atendido.",
+        "impact": "Perda da capacidade de supervisão semântica contínua e independência de modelos. O projeto passa a depender unicamente de verificações determinísticas ou avaliações manuais uniprovedor.",
+        "recommendation": "Regularizar os limites de faturamento das contas OpenAI e Gemini e configurar ANTHROPIC_API_KEY para restabelecer o quórum multi-modelo de governança 2/3 antes da entrada de dados reais.",
+        "affected_files": [
+          "CHECKLIST_PROJETO.md",
+          ".github/workflows/ai-governor.yml"
+        ],
+        "origin": "ai:gemini"
+      },
+      {
+        "id": "GEMINI-GOV-RESIL-005",
+        "title": "Falta de Configuração de Timeout nos Provedores do Motor de Atestados",
+        "category": "availability",
+        "severity": "medium",
+        "confidence": "high",
+        "evidence": "Em motor_atestados/provedores.py, as inicializações dos clientes 'anthropic.Anthropic()', 'openai.OpenAI()' e 'genai.Client()' não definem timeout explícito, ao contrário do governador em agente_governanca/provedores.py que foi corrigido no PR #24.",
+        "impact": "Se a API de um provedor sofrer lentidão ou interrupção silenciosa, a thread de processamento ficará travada indefinidamente, esgotando recursos da aplicação.",
+        "recommendation": "Implementar timeout padrão configurável via variável de ambiente (ex: ATESTATOS_PROVIDER_TIMEOUT_SECONDS) em todos os adaptadores de provedores do motor.",
+        "affected_files": [
+          "motor_atestados/provedores.py"
+        ],
+        "origin": "ai:gemini"
+      }
+    ],
+    "architecture_decisions": [
+      {
+        "title": "[gemini] ADR-0002: Despacho de Operações de IA e Extração de Documentos em Threadpool no Motor",
+        "status": "proposed",
+        "context": "O motor de validação de atestados (FastAPI) utiliza endpoints assíncronos, porém suas dependências de negócio (PyMuPDF para extração e SDKs de IA para inferência) são síncronas e bloqueantes. No piloto compartilhado, requisições simultâneas congelariam o servidor Uvicorn se executadas diretamente no event loop.",
+        "decision": "Utilizar 'starlette.concurrency.run_in_threadpool' para isolar a chamada de 'servico.analisar' dentro da rota '/v1/analyses', garantindo que o event loop do Uvicorn permaneça responsivo para conexões simultâneas e verificações de integridade.",
+        "consequences": "Benefícios: responsividade contínua da API e eliminação de bloqueio de requisições de outros usuários. Mitigações: a quantidade de threads continua sujeita ao limite do threadpool padrão do anyio/starlette."
+      }
+    ],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 1,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "gemini",
+        "status": "success",
+        "model": "gemini-3.7-flash",
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
