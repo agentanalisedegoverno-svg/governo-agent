@@ -1,0 +1,48 @@
+{
+  "context": {
+    "sha": "8893c8a486feab25c09a701bf8a28ce9a43fa679",
+    "branch": "main",
+    "repository": "agentanalisedegoverno-svg/governo-agent",
+    "actor": "agentanalisedegoverno-svg",
+    "event": "schedule",
+    "run_id": "40346856011"
+  },
+  "result": {
+    "summary": "Nenhum provedor de IA concluiu a analise.",
+    "overall_risk": "none",
+    "decision": "pass",
+    "findings": [],
+    "architecture_decisions": [],
+    "knowledge_updates": [],
+    "proposed_patches": [],
+    "execution_status": "degraded",
+    "quorum": {
+      "minimum": 2,
+      "successful": 0,
+      "reached": false
+    },
+    "provider_runs": [
+      {
+        "provider": "anthropic",
+        "status": "failed",
+        "error_type": "missing_credentials",
+        "message": "ANTHROPIC_API_KEY nao configurada."
+      },
+      {
+        "provider": "openai",
+        "status": "failed",
+        "error_type": "RateLimitError",
+        "message": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_balance_exhausted'}}"
+      },
+      {
+        "provider": "gemini",
+        "status": "failed",
+        "error_type": "APITimeoutError",
+        "message": "Request timed out. This is a client-side timeout. You can increase the timeout by setting the `timeout` argument on your request or in the client http options."
+      }
+    ],
+    "rejected_knowledge_updates": [],
+    "applied_patches": [],
+    "rejected_patches": []
+  }
+}
